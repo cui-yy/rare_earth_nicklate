@@ -38,6 +38,1735 @@ The rows of BA(RRBA):
 11
 
 
+#!/bin/bash
+## Finction:To automatically generate defects
+
+# To add parameters from config.txt
+name_A=`grep "AAAA" config.txt | awk '{print \$2}'`
+name_B=`grep "BBBB" config.txt | awk '{print \$2}'`
+name_O=`grep "OOOO" config.txt | awk '{print \$2}'`
+num_A=`grep "AAAA" config.txt | awk '{print \$3}'`
+num_B=`grep "BBBB" config.txt | awk '{print \$3}'`
+num_O=`grep "OOOO" config.txt | awk '{print \$3}'`
+val_A=`grep "AAAA" config.txt | awk '{print \$4}'`
+val_B=`grep "BBBB" config.txt | awk '{print \$4}'`
+val_O=`grep "OOOO" config.txt | awk '{print \$4}'`
+ele_A=`grep "AAAA" config.txt | awk '{print \$5}'`
+ele_B=`grep "BBBB" config.txt | awk '{print \$5}'`
+ele_O=`grep "OOOO" config.txt | awk '{print \$5}'`
+ISPIN=`grep "PPPP" config.txt | awk '{print \$2}'`
+let tmp=1+`grep -n "MNNM" config.txt |cut -f1 -d:`
+nor_M=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "MRRM" config.txt |cut -f1 -d:`
+rep_M=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "CCAI" config.txt |cut -f1 -d:`
+c_Ai=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "CCBI" config.txt |cut -f1 -d:`
+c_Bi=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "CCOI" config.txt |cut -f1 -d:`
+c_Oi=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "RRVA" config.txt |cut -f1 -d:`
+r_VA=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "RRVB" config.txt |cut -f1 -d:`
+r_VB=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "RRVO" config.txt |cut -f1 -d:`
+r_VO=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "RRAB" config.txt |cut -f1 -d:`
+r_AB=`sed -n "${tmp}p" config.txt`
+let tmp=1+`grep -n "RRBA" config.txt |cut -f1 -d:`
+r_BA=`sed -n "${tmp}p" config.txt`
+r_nele=`grep -n "NELECT" nopure/1/INCAR |cut -f1 -d:`
+if [ -z $r_nele ]; then
+    r_nele=10
+    sed -i "${r_nele}i \#NELECT = " nopure/1/INCAR
+fi
+r_mag=`grep -n "MAGMOM" nopure/1/INCAR |cut -f1 -d:`
+if [ -z $r_mag ]; then
+    r_mag=34
+    sed -i "${r_mag}i \#MAGMOM = " nopure/1/INCAR
+fi
+let total_Nelect=num_A*ele_A+num_B*ele_B+num_O*ele_O
+
+function makedir(){
+mkdir ${name_A}i ${name_B}i ${name_O}i
+mkdir V${name_A} V${name_B} V${name_O}
+mkdir ${name_A}${name_B} ${name_B}${name_A}
+}
+
+function gen_i(){
+#For Ai
+mkdir ${name_A}i/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_A}i/1
+cd ${name_A}i/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A+1
+let temp_B=num_B
+let temp_O=num_O
+let temp=total_Nelect+ele_A-val_A
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
+fi
+let temp=8+num_A
+sed -i "${temp}a   ${c_Ai}" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+
+#For Bi
+mkdir ${name_B}i/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_B}i/1
+cd ${name_B}i/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A
+let temp_B=num_B+1
+let temp_O=num_O
+let temp=total_Nelect+ele_B-val_B
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M 0 ${temp_O}*0" INCAR
+fi
+let temp=8+num_A+num_B
+sed -i "${temp}a   ${c_Bi}" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+
+#For Oi
+mkdir ${name_O}i/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_O}i/1
+cd ${name_O}i/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A
+let temp_B=num_B
+let temp_O=num_O+1
+let temp=total_Nelect+ele_O-val_O
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
+fi
+let temp=8+num_A+num_B+num_O
+sed -i "${temp}a   ${c_Oi}" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+}
+
+function gen_v(){
+#For VA
+mkdir V${name_A}/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_A}/1
+cd V${name_A}/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A-1
+let temp_B=num_B
+let temp_O=num_O
+let temp=total_Nelect-ele_A+val_A
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
+fi
+sed -i "${r_VA}d" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+
+#For VB
+mkdir V${name_B}/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_B}/1
+cd V${name_B}/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A
+let temp_B=num_B-1
+let temp_O=num_O
+let temp=total_Nelect-ele_B+val_B
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 ${rep_M} ${temp_O}*0" INCAR
+fi
+sed -i "${r_VB}d" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+
+#For VO
+mkdir V${name_O}/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_O}/1
+cd V${name_O}/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A
+let temp_B=num_B
+let temp_O=num_O-1
+let temp=total_Nelect-ele_O+val_O
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
+fi
+sed -i "${r_VO}d" POSCAR
+sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+}
+
+function gen_ABBA(){
+#For AB
+mkdir ${name_A}${name_B}/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_A}${name_B}/1
+cd ${name_A}${name_B}/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A+1
+let temp_B=num_B-1
+let temp_O=num_O
+let temp=total_Nelect+ele_A-ele_B-val_A+val_B
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $rep_M ${temp_O}*0" INCAR
+fi
+temp=`sed -n "${r_AB}p" POSCAR`
+sed -i "${r_AB}d" POSCAR
+let temp1=8+num_A
+sed -i "${temp1}a ${temp}" POSCAR
+sed -i "7c ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+
+#For BA
+mkdir ${name_B}${name_A}/1
+cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_B}${name_A}/1
+cd ${name_B}${name_A}/1/
+mv CONTCAR POSCAR
+sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
+let temp_A=num_A-1
+let temp_B=num_B+1
+let temp_O=num_O
+let temp=total_Nelect-ele_A+ele_B+val_A-val_B
+sed -i "${r_nele}c NELECT = ${temp}" INCAR
+if [ $ISPIN = '2' ]; then
+    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M 0 ${temp_O}*0" INCAR
+fi
+temp=`sed -n "${r_BA}p" POSCAR`
+sed -i "${r_BA}d" POSCAR
+let temp1=7+num_A+num_B
+sed -i "${temp1}a ${temp}" POSCAR
+sed -i "7c ${temp_A} ${temp_B} ${temp_O}" POSCAR
+cd ../..
+}
+
+function makedirtemp(){
+mkdir ${name_A}i ${name_B}i ${name_O}i
+}
+makedir
+##makedirtemp
+gen_i
+gen_v
+gen_ABBA
+#!/bin/bash
+#To change the ##LLLL## for loop submit file
+## change the set for loop file##
+file_name=c_loop_ks.sh
+change_file_name=loop_ks.slurm
+submit=sbatch
+if [ -z "$1" ]; then
+echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+
+if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
+if [ "$1" -gt 0 ] 2>/dev/null ;then 
+    echo "Submitting"
+else 
+echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+fi
+
+let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
+if [ $1 = "-m" ]; then
+sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
+elif [ $1 = "-c" ]; then
+sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
+else
+sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
+fi
+
+$submit ${RVASP_path}/${change_file_name}
+#!/bin/bash
+#To change the ##LLLL## for loop submit file
+## change the set for loop file##
+file_name=c_loop_mgi.sh
+change_file_name=loop_mgi.pbs
+submit=qsub
+if [ -z "$1" ]; then
+echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+
+if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
+if [ "$1" -gt 0 ] 2>/dev/null ;then 
+    echo "Submitting"
+else 
+echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+fi
+
+let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
+if [ $1 = "-m" ]; then
+sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
+elif [ $1 = "-c" ]; then
+sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
+else
+sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
+fi
+
+$submit ${RVASP_path}/${change_file_name}
+#!/bin/bash
+#To change the ##LLLL## for loop submit file
+## change the set for loop file##
+file_name=c_loop_sz.sh
+change_file_name=loop_sz.lsf
+submit=bsub
+if [ -z "$1" ]; then
+echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+
+if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
+if [ "$1" -gt 0 ] 2>/dev/null ;then 
+    echo "Submitting"
+else 
+echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
+echo "Please read the README ($RVASP_path) carefully"
+exit 0
+fi
+fi
+
+let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
+if [ $1 = "-m" ]; then
+sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
+elif [ $1 = "-c" ]; then
+sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
+else
+sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
+fi
+
+$submit ${RVASP_path}/${change_file_name}
+#!/bin/bash
+
+if [ -z "$1" ]; then
+echo "error in parameter"
+exit 0
+fi
+mkdir nofolder4copying
+folderaddress="$(pwd)/nofolder4copying"
+
+function copy1(){
+cp 1 $folderaddress/$1 -r
+}
+
+function copy5.relax(){
+mkdir $folderaddress/$1/5.relax
+copybased 5.relax $1
+rm $folderaddress/$1/5.relax/OUTCAR
+}
+
+function copy5.static(){
+mkdir $folderaddress/$1/5.static
+copybased 5.static $1
+}
+
+function copy7(){
+mkdir $folderaddress/$1/7.chg
+copybased 7.chg $1
+##cp 7.chg/CHGCAR  $folderaddress/$1/7.chg
+cp 7.chg/ELFCAR  $folderaddress/$1/7.chg
+cp 7.chg/ACF.dat  $folderaddress/$1/7.chg
+}
+
+function copy8(){
+mkdir $folderaddress/$1/8.band
+copybased 8.band $1
+cp 8.band/EIGENVAL  $folderaddress/$1/8.band
+cp 8.band/band.csv $folderaddress/$1/8.band
+cp 8.band/banddown.csv  $folderaddress/$1/8.band
+}
+
+function copy9(){
+mkdir $folderaddress/$1/9.dos
+copybased 9.dos $1
+cp 9.dos/DOSCAR  $folderaddress/$1/9.dos
+cp 9.dos/pdos.csv $folderaddress/$1/9.dos
+cp 9.dos/EIGENVAL $folderaddress/$1/9.dos
+cp 9.dos/boltztrap_up.trace $folderaddress/$1/9.dos
+cp 9.dos/boltztrap_down.trace $folderaddress/$1/9.dos
+}
+
+function copy10(){
+mkdir $folderaddress/$i/10.optics
+copybased 10.optics $1
+cp 10.optics/optdata.csv $folderaddress/$1/10.optics
+}
+
+function copybased(){
+cp $1/OUTCAR $folderaddress/$2/$1
+cp $1/CONTCAR $folderaddress/$2/$1
+cp $1/INCAR $folderaddress/$2/$1
+cp $1/POSCAR $folderaddress/$2/$1
+cp $1/KPOINTS $folderaddress/$2/$1
+cp $1/OSZICAR $folderaddress/$2/$1
+cp $1/POTCAR $folderaddress/$2/$1
+}
+
+
+function main(){
+t=$2
+copy1 $1
+if [ $(($t % 2)) == 0 ]; then
+copy5.relax $1
+fi
+if [ $(($t % 3)) == 0 ]; then
+copy5.static $1
+fi
+if [ $(($t % 5)) == 0 ]; then
+copy7 $1
+fi
+if [ $(($t % 7)) == 0 ]; then
+copy8 $1
+fi
+if [ $(($t % 11)) == 0 ]; then
+copy9 $1
+fi
+if [ $(($t % 13)) == 0 ]; then
+copy10 $1
+fi
+}
+
+function loop(){
+for i in $(ls -d */)
+do
+if [[ $i == no* ]] ; then
+continue
+fi
+mkdir $folderaddress/$i
+cd $i
+main $i $1
+cd ..
+done
+}
+
+
+loop $1
+#!/bin/bash
+## 修改POTCAR中的PBE所在位置 ##
+p=~/POTCAR/PAW_PBE
+## Done ##
+if [ $# = 1 ]; then
+cat $p/$1/POTCAR > POTCAR
+elif [ $# = 2 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+elif [ $# = 3 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+elif [ $# = 4 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+cat $p/$4/POTCAR >> POTCAR
+elif [ $# = 5 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+cat $p/$4/POTCAR >> POTCAR
+cat $p/$5/POTCAR >> POTCAR
+elif [ $# = 6 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+cat $p/$4/POTCAR >> POTCAR
+cat $p/$5/POTCAR >> POTCAR
+cat $p/$6/POTCAR >> POTCAR
+elif [ $# = 7 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+cat $p/$4/POTCAR >> POTCAR
+cat $p/$5/POTCAR >> POTCAR
+cat $p/$6/POTCAR >> POTCAR
+cat $p/$7/POTCAR >> POTCAR
+elif [ $# = 8 ]; then
+cat $p/$1/POTCAR > POTCAR
+cat $p/$2/POTCAR >> POTCAR
+cat $p/$3/POTCAR >> POTCAR
+cat $p/$4/POTCAR >> POTCAR
+cat $p/$5/POTCAR >> POTCAR
+cat $p/$6/POTCAR >> POTCAR
+cat $p/$7/POTCAR >> POTCAR
+cat $p/$8/POTCAR >> POTCAR
+fi
+#!/bin/bash
+for i in $(ls -d */)
+do
+if [[ $i == no* ]] ; then
+continue
+fi
+echo -n "$i" >> TOTENfile
+grep TOTEN $i/5.static/OUTCAR|tail -n 1 >> TOTENfile
+done
+#!/bin/bash
+#To add the alias and RVASP_path to .bashrc, including rpotcar, rtotal, rcopy and rmgi.
+chmod a+x bader_charge/bader
+chmod a+x bader_charge/chgsum.pl
+R_path=`pwd`
+if [ "$(cat $HOME/.bashrc | grep RVASP)" == "" ]; then
+cat >> $HOME/.bashrc <<!
+## RVASP Settings Start ##
+export RVASP_path=$R_path
+alias rbtp="bash \$RVASP_path/boltztrap/autoBTP.sh"
+alias rpotcar="bash \$RVASP_path/getPOTCAR.sh"
+alias rtotal="bash \$RVASP_path/getTOTEN.sh"
+alias rcopy="bash \$RVASP_path/copytool.sh"
+alias rmgi="bash \$RVASP_path/c_loop_mgi.sh"
+alias rsz="bash \$RVASP_path/c_loop_sz.sh"
+## RVASP Settings Done ##
+!
+source $HOME/.bashrc
+else
+    echo "RVASP has been installed, or the ~/.bashrc file has not been deleted cleanly"
+fi
+!/bin/bash
+#SBATCH -J GaN
+#SBATCH -N 1
+#SBATCH -n 32
+#SBATCH -p szsc_c
+NP=32
+module purge
+module load compiler/intel/2017.5.239
+module load mpi/hpcx/2.4.1/intel-2017.5.239
+
+function runvasp(){
+echo -n "start time " > time
+date >> time
+srun --mpi=pmix_v3 /public/software/apps/vasp/5.4.4/hpcx-2.4.1-intel2017/vasp_std &> output
+echo -n "end time " >> time ; date >> time
+cat time >> output
+}
+
+
+function check(){
+if [ ! -f "OUTCAR" ] ;then
+echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
+exit
+fi
+tail "OUTCAR" > "OUTINFO"
+outcheck=$(grep "Voluntary context switches:" OUTINFO) 
+rm OUTINFO
+if [ -z "$outcheck" ]
+then
+echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
+echo $PBS_JOBID >> $RVASP_path/errorinfo
+exit
+fi
+}
+
+
+function s5_relax(){
+cp 1 5.relax -r
+cd 5.relax
+runvasp
+check
+cd ..
+}
+
+function s5_static_opt(){
+bash ${RVASP_path}/calc_step/static_opt
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s5_static(){
+bash ${RVASP_path}/calc_step/static
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s7(){
+bash ${RVASP_path}/calc_step/chg
+cd 7.chg
+runvasp
+check
+cp INCAR INCAR_ELF
+mv INCAR_step INCAR
+bash ${RVASP_path}/bader_charge/get_bader_charge.sh
+cd ..
+}
+
+
+function s8(){
+bash ${RVASP_path}/calc_step/band
+cd 8.band
+runvasp
+check
+python ${RVASP_path}/calc_step/bandscript.py
+cd ..
+}
+
+
+function s9(){
+bash ${RVASP_path}/calc_step/dos
+cd 9.dos
+runvasp
+check
+python ${RVASP_path}/calc_step/dosscript.py
+cd ..
+}
+
+function s10(){
+bash ${RVASP_path}/calc_step/optics
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function s10_metal(){
+bash ${RVASP_path}/calc_step/optics_metal
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function main(){
+if [ $(($1 % 2)) == 0 ]; then
+s5_relax
+fi
+if [ $(($1 % 3)) == 0 ]; then
+if [ $(($2 % 2)) == 0 ]; then
+s5_static_opt
+else
+s5_static
+fi
+fi
+if [ $(($1 % 5)) == 0 ]; then
+if [ $(($2 % 3)) == 0 ]; then
+s7
+else
+s7
+fi
+fi
+if [ $(($1 % 7)) == 0 ]; then
+s8
+fi
+if [ $(($1 % 11)) == 0 ]; then
+if [ $(($2 % 5)) == 0 ]; then
+s9
+else
+s9
+fi
+fi
+if [ $(($1 % 13)) == 0 ]; then
+if [ $(($2 % 7)) == 0 ]; then
+s10_metal
+else
+s10
+if [ -e 10.optics/optdata.csv ]; then
+    rm -r 10.optics
+    s10_metal
+fi
+fi
+fi
+}
+
+function loop(){
+for i in $(ls -d */)
+do
+if [[ $i == no* ]] ; then
+continue
+fi
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+function choose(){
+for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
+do
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+
+####LLLL###Don`t delete this line###
+loop 715 2
+##choose $temp1 $temp2
+##loop $temp1 $temp2
+##main $temp1 $temp2
+#PBS -N rtest_1_20
+#PBS -l nodes=1:ppn=20
+#PBS -j oe
+#PBS -l walltime=24000:00:00
+#PBS -q high
+echo "This job is "$PBS_JOBID@$PBS_QUEUE
+cd $PBS_O_WORKDIR
+pwd
+nproc=$(cat $PBS_NODEFILE | wc -l)
+echo $nproc
+
+function runvasp(){
+mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
+}
+
+function check(){
+if [ ! -f "OUTCAR" ] ;then
+echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
+exit
+fi
+tail "OUTCAR" > "OUTINFO"
+outcheck=$(grep "Voluntary context switches:" OUTINFO) 
+rm OUTINFO
+if [ -z "$outcheck" ]
+then
+echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
+echo $PBS_JOBID >> $RVASP_path/errorinfo
+exit
+fi
+}
+
+
+function s5.relax(){
+cp 1 5.relax -r
+cd 5.relax
+runvasp
+check
+cd ..
+}
+
+function s5.static.opt(){
+bash ${RVASP_path}/calc_step/static_opt
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s5.static(){
+bash ${RVASP_path}/calc_step/static
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s7(){
+bash ${RVASP_path}/calc_step/chg
+cd 7.chg
+runvasp
+check
+cp INCAR INCAR_ELF
+mv INCAR_step INCAR
+bash ${RVASP_path}/bader_charge/get_bader_charge.sh
+cd ..
+}
+
+
+function s8(){
+bash ${RVASP_path}/calc_step/band
+cd 8.band
+runvasp
+check
+python ${RVASP_path}/calc_step/bandscript.py
+cd ..
+}
+
+
+function s9(){
+bash ${RVASP_path}/calc_step/dos
+cd 9.dos
+runvasp
+check
+python ${RVASP_path}/calc_step/dosscript.py
+cd ..
+}
+
+function s10(){
+bash ${RVASP_path}/calc_step/optics
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function s10_metal(){
+bash ${RVASP_path}/calc_step/optics_metal
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function main(){
+if [ $(($1 % 2)) == 0 ]; then
+s5.relax
+fi
+if [ $(($1 % 3)) == 0 ]; then
+if [ $(($2 % 2)) == 0 ]; then
+s5.static.opt
+else
+s5.static
+fi
+fi
+if [ $(($1 % 5)) == 0 ]; then
+if [ $(($2 % 3)) == 0 ]; then
+s7
+else
+s7
+fi
+fi
+if [ $(($1 % 7)) == 0 ]; then
+s8
+fi
+if [ $(($1 % 11)) == 0 ]; then
+if [ $(($2 % 5)) == 0 ]; then
+s9
+else
+s9
+fi
+fi
+if [ $(($1 % 13)) == 0 ]; then
+if [ $(($2 % 7)) == 0 ]; then
+s10_metal
+else
+s10
+if [ -e 10.optics/optdata.csv ]; then
+    rm -r 10.optics
+    s10_metal
+fi
+fi
+fi
+}
+
+function loop(){
+for i in $(ls -d */)
+do
+if [[ $i == no* ]] ; then
+continue
+fi
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+function choose(){
+for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
+do
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+
+####LLLL###Don`t delete this line###
+choose 6 2 D110a D110b                                      
+##choose $temp1 $temp2
+##loop $temp1 $temp2
+##main $temp1 $temp2
+#!/bin/sh
+APP_NAME=intelY_mid
+NP=24
+NP_PER_NODE=12
+RUN="RAW"
+CURDIR=$PWD
+
+VASP=/home-yw/Soft/Vasp5.4/vasp_std
+source  /home-yw/env/intel-12.1.sh
+source  /home-yw/env/openmpi-1.6.5-intel.sh
+
+cd $CURDIR
+
+#start creating .nodelist
+rm -rf $CURDIR/nodelist >& /dev/null
+for i in `echo $LSB_HOSTS`
+do
+    echo "$i" >> $CURDIR/nodelist
+done
+nodelist=$(cat $CURDIR/nodelist | uniq | awk '{print $1}' | tr '\n' ',')
+
+function runvasp(){
+#
+echo -n "start time  " > time
+date >> time
+
+# for GK & YW users
+touch WAVECAR PCDAT IBZKPT XDATCAR OSZICAR CONTCAR CHG PROCAR OUTCAR EIGENVAL DOSCAR CHGCAR
+sleep 10
+
+mpirun -np $NP -machinefile $CURDIR/nodelist $VASP  &> vasp.out
+echo -n "end   time  " >> time ; date >> time
+cat time >> vasp.out
+#
+}
+
+
+function check(){
+if [ ! -f "OUTCAR" ] ;then
+echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
+exit
+fi
+tail "OUTCAR" > "OUTINFO"
+outcheck=$(grep "Voluntary context switches:" OUTINFO) 
+rm OUTINFO
+if [ -z "$outcheck" ]
+then
+echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
+echo $PBS_JOBID >> $RVASP_path/errorinfo
+exit
+fi
+}
+
+
+function s5_relax(){
+cp 1 5.relax -r
+cd 5.relax
+runvasp
+check
+cd ..
+}
+
+function s5_static_opt(){
+bash ${RVASP_path}/calc_step/static_opt
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s5_static(){
+bash ${RVASP_path}/calc_step/static
+cd 5.static
+runvasp
+check
+cd ..
+}
+
+function s7(){
+bash ${RVASP_path}/calc_step/chg
+cd 7.chg
+runvasp
+check
+cp INCAR INCAR_ELF
+mv INCAR_step INCAR
+bash ${RVASP_path}/bader_charge/get_bader_charge.sh
+cd ..
+}
+
+
+function s8(){
+bash ${RVASP_path}/calc_step/band
+cd 8.band
+runvasp
+check
+python ${RVASP_path}/calc_step/bandscript.py
+cd ..
+}
+
+
+function s9(){
+bash ${RVASP_path}/calc_step/dos
+cd 9.dos
+runvasp
+check
+python ${RVASP_path}/calc_step/dosscript.py
+cd ..
+}
+
+function s10(){
+bash ${RVASP_path}/calc_step/optics
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function s10_metal(){
+bash ${RVASP_path}/calc_step/optics_metal
+cd 10.optics
+runvasp
+check
+python ${RVASP_path}/calc_step/optscript.py
+cd ..
+}
+
+function main(){
+if [ $(($1 % 2)) == 0 ]; then
+s5_relax
+fi
+if [ $(($1 % 3)) == 0 ]; then
+if [ $(($2 % 2)) == 0 ]; then
+s5_static_opt
+else
+s5_static
+fi
+fi
+if [ $(($1 % 5)) == 0 ]; then
+if [ $(($2 % 3)) == 0 ]; then
+s7
+else
+s7
+fi
+fi
+if [ $(($1 % 7)) == 0 ]; then
+s8
+fi
+if [ $(($1 % 11)) == 0 ]; then
+if [ $(($2 % 5)) == 0 ]; then
+s9
+else
+s9
+fi
+fi
+if [ $(($1 % 13)) == 0 ]; then
+if [ $(($2 % 7)) == 0 ]; then
+s10_metal
+else
+s10
+if [ -e 10.optics/optdata.csv ]; then
+    rm -r 10.optics
+    s10_metal
+fi
+fi
+fi
+}
+
+function loop(){
+for i in $(ls -d */)
+do
+if [[ $i == no* ]] ; then
+continue
+fi
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+function choose(){
+for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
+do
+if [ $(($1 % 7)) == 0 ]; then
+cp KPOINTS_band $i/KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+cp KPOINTS_dos $i/KPOINTS_dos
+fi
+cd $i
+main $1 $2
+if [ $(($1 % 7)) == 0 ]; then
+rm KPOINTS_band
+fi
+if [ $(($1 % 11)) == 0 ]; then
+rm KPOINTS_dos
+fi
+cd ..
+done
+}
+
+
+####LLLL###Don`t delete this line###
+loop 715 2
+##choose $temp1 $temp2
+##loop $temp1 $temp2
+##main $temp1 $temp2
+
+exit
+#!/bin/sh
+cp $RVASP_path/bader_charge/chgsum.pl $RVASP_path/bader_charge/bader .
+./chgsum.pl  AECCAR0  AECCAR1 AECCAR2
+./bader CHGCAR -ref CHGCAR_sum
+rm chgsum.pl bader AVF.dat  BCF.dat CHGCAR_sum
+#!/bin/bash
+## Need to set the path where boltztrap is installed ,and the T of intrans##
+boltztrap_path=$HOME/soft/boltztrap-1.2.5
+## Settings ##
+
+T1="300."
+T2="300."
+if [ $# -eq 2 ]; then
+T1=$1
+T2=$2
+fi
+python $RVASP_path/boltztrap/EIGENVAL_up_down.py
+function btp(){
+    $boltztrap_path/src/x_trans BoltzTraP
+    rm :log
+}
+function up_down(){
+mkdir boltztrap_up
+mkdir boltztrap_down
+mv EIGENVAL EIGENVAL_def
+mv EIGENVAL_up EIGENVAL
+vaspkit -task 731
+mv case.intrans boltztrap_up/boltztrap_up.intrans
+mv case.energy boltztrap_up/boltztrap_up.energy
+mv case.struct boltztrap_up/boltztrap_up.struct
+mv EIGENVAL EIGENVAL_up
+mv EIGENVAL_down EIGENVAL
+vaspkit -task 731
+mv case.intrans boltztrap_down/boltztrap_down.intrans
+mv case.energy boltztrap_down/boltztrap_down.energy
+mv case.struct boltztrap_down/boltztrap_down.struct
+mv EIGENVAL EIGENVAL_down
+mv EIGENVAL_def EIGENVAL
+rm EIGENVAL_up
+rm EIGENVAL_down
+cd boltztrap_up
+sed -i "8c $T1 $T2" boltztrap_up.intrans
+btp
+cd ..
+mv boltztrap_up/boltztrap_up.trace boltztrap_up.trace
+rm boltztrap_up -r
+cd boltztrap_down
+sed -i "8c $T1 $T2" boltztrap_down.intrans
+btp
+cd ..
+mv boltztrap_down/boltztrap_down.trace boltztrap_down.trace
+rm boltztrap_down -r
+}
+
+
+function check_up(){
+    if [ ! -f "EIGENVAL_up" ] ; then
+        vaspkit -task 731
+        mkdir boltztrap_up
+        mv case.intrans boltztrap_up/boltztrap_up.intrans
+        mv case.energy boltztrap_up/boltztrap_up.energy
+        mv case.struct boltztrap_up/boltztrap_up.struct
+        cd boltztrap_up
+        sed -i "8c $T1 $T2" boltztrap_up.intrans
+        btp
+        cd ..
+        mv boltztrap_up/boltztrap_up.trace boltztrap_up.trace
+        rm boltztrap_up -r
+    else
+        up_down
+    fi
+}
+
+check_up
+rm FERMI_ENERGY
+
+#!/bin/bash
+
+##需要两个文件，一个BoltzTraP安装包，一个Makefile，放在~/soft/文件夹下
+cd ~/soft/
+tar -jxvf ~/soft/BoltzTraP*
+cp Makefile ~/soft/boltztrap-1.2.5/src/Makefile_ifort
+cd ~/soft/boltztrap-1.2.5/src/
+make -f Makefile_ifort
+
+echo "#######################"
+echo "########  Done ########"
+echo "#######################"
+
+
+## Divide the EIGENVAL into spin up and spin down to fit boltztrap.
+with open('EIGENVAL', 'r') as fcheck:
+    linescheck = fcheck.readlines()
+    if len(linescheck[8].split())==5:
+        with open('EIGENVAL', 'r') as f:
+            lines = f.readlines()
+            linesup = list(lines)  ## spin up for BoltzTraP
+            linesdown = list(lines)  ## spin down for BoltzTraP
+            k = int(lines[5].split()[1])   ## this is k number
+            bars = int(lines[5].split()[2])  ## this is count of k 
+            for i in range(k):
+                for j in range(bars):
+                    temp = lines[8+(bars+2)*i+j].split()
+                    linesup[8+(bars+2)*i+j] = "  " + temp[0] + "  " + temp[1] + "  " + temp[3] + '\n'
+                    linesdown[8+(bars+2)*i+j] = "  " + temp[0] + "  " + temp[2] + "  " + temp[4] + '\n'
+        with open('EIGENVAL_up', 'w') as f:
+            f.writelines(linesup)
+        with open('EIGENVAL_down', 'w') as f:
+            f.writelines(linesdown)
+
+
+#!/bin/bash
+#for INCAR setting
+f78=$(<7.chg/INCAR)
+function to_band_INCAR(){
+f78="${f78[@]/ICHARG = 2/ICHARG = 11}"
+f78="${f78[@]/ISMEAR = -5/ISMEAR = 0}"
+f78="${f78[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
+f78="${f78[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
+}
+to_band_INCAR
+function to_band(){
+mkdir 8.band
+cp 7.chg/POSCAR 8.band/POSCAR
+cp 7.chg/POTCAR 8.band/POTCAR
+cp 7.chg/CHGCAR 8.band/CHGCAR
+KP="$(pwd)/KPOINTS_band"
+cp $KP 8.band/KPOINTS
+echo "$f78" > 8.band/INCAR
+}
+to_band
+
+import os
+'''
+Applies to python2 and may apply to python3
+When the vasp band is calculated, running this script can generate the band data file 'band.csv'. 
+For systems with spin, band.csv (spin-up) and banddown.csv (spin-down) will be generated.
+By: Junsong Ren
+'''
+
+fermi = 0
+isspin = 0
+
+
+fermi_file=os.popen("grep E-fermi OUTCAR | tail -n 1")
+fermi=float(fermi_file.readlines()[0].split()[2])
+with open('EIGENVAL', 'r') as f:
+    lines = f.readlines()
+    if len(lines[8].split())==5:
+        isspin = 1
+    k = int(lines[5].split()[1])
+    bars = int(lines[5].split()[2])
+    data = [[0 for col in range(bars)] for row in range(k)]
+    for i in range(k):
+        for j in range(bars):
+            data[i][j] = float(lines[8+(bars+2)*i+j].split()[1])-fermi
+    datadown = [[0 for col in range(bars)] for row in range(k)]
+    for i in range(k):
+        for j in range(bars):
+            datadown[i][j] = float(lines[8+(bars+2)*i+j].split()[2])-fermi
+
+with open('band.csv', 'w') as f:
+    for i in range(k):
+        f.write(str(i+1))
+        for j in range(bars):
+            f.write(','+str(data[i][j]))
+        f.write('\n')
+
+if isspin:
+    with open('banddown.csv', 'w') as f:
+        for i in range(k):
+            f.write(str(i+1))
+            for j in range(bars):
+                f.write(','+str(datadown[i][j]))
+            f.write('\n')
+
+
+#!/bin/bash
+#for INCAR setting
+f57=$(<5.static/INCAR)
+function to_chg_INCAR(){
+f57="${f57[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
+f57="${f57[@]/LCHARG = .FALSE./LCHARG = .TRUE.}"
+}
+to_chg_INCAR
+function to_chg(){
+mkdir 7.chg
+cp 5.static/POTCAR 7.chg/POTCAR
+cp 5.static/CONTCAR 7.chg/POSCAR
+cp 5.static/KPOINTS 7.chg/KPOINTS
+echo "$f57" > 7.chg/INCAR_step
+echo "$f57" > 7.chg/INCAR
+echo '## bader_charge and ELF set##' >> 7.chg/INCAR
+echo 'LAECHG = .TRUE.' >> 7.chg/INCAR
+echo 'LELF = .TRUE.' >> 7.chg/INCAR
+}
+to_chg
+
+#!/bin/bash
+#for INCAR setting
+f79=$(<7.chg/INCAR)
+function to_dos_INCAR(){
+f79="${f79[@]/ICHARG = 2/ICHARG = 11}"
+f79="${f79[@]/ISMEAR = 1/ISMEAR = -5}"
+f79="${f79[@]/ISMEAR = 0/ISMEAR = -5}"
+f79="${f79[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
+f79="${f79[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
+}
+to_dos_INCAR
+function to_dos(){
+mkdir 9.dos
+cp 7.chg/POTCAR 9.dos/POTCAR
+cp 7.chg/POSCAR 9.dos/POSCAR
+cp 7.chg/CHGCAR 9.dos/CHGCAR
+KP="$(pwd)/KPOINTS_dos"
+cp $KP 9.dos/KPOINTS
+echo "$f79" > 9.dos/INCAR
+echo -e '' >> 9.dos/INCAR
+echo '#= DOS Addition Settings =#' >> 9.dos/INCAR
+echo 'NEDOS = 1000' >> 9.dos/INCAR
+echo 'EMIN = -12' >> 9.dos/INCAR
+echo 'EMAX = 18' >> 9.dos/INCAR
+}
+to_dos
+
+## script to calculate the PDOS for VASP, spin-up and spin-down are in the same column.
+## Modify the parameters if necessary ##
+NEDOS = 1000;		##NEDOS flag in file INCAR
+## ##
+nums = [];
+fermi = 0;
+LORBITNUM = 1;	
+with open('POSCAR', 'r') as numfile:
+	linesnum = numfile.readlines()
+	nums = linesnum[6].split()  ## number of atoms for each element in file POSCAR,save as type list
+	
+with open('DOSCAR', 'r') as fe:
+	lines = fe.readlines()
+	fermi = float(lines[5].split()[3])		##fermi value
+	LORBITNUM = int(lines[0].split()[2])	##NUM = 1(LORBIT = 11),NUM = 0(LORBIT =Default)
+	NEDOS = int(lines[5].split()[2])
+	
+	if len(lines[6].split()) == 5:		##ISPIN = 2 OR 1	
+		dataEnergy = [0 for col in range(NEDOS)];  ##data for Energy
+		dataTotalUp = [0 for col in range(NEDOS)];	##data for TotalUp
+		dataTotalDown = [0 for col in range(NEDOS)]; ##data for TotalDown
+		for i in range(NEDOS):
+			dataEnergy[i] = float(lines[i+6].split()[0])-fermi;
+			dataTotalUp[i] = float(lines[i+6].split()[1]);
+			dataTotalDown[i] =-float(lines[i+6].split()[2]);
+		if LORBITNUM == 1:
+			prej = len(nums);
+			prek = NEDOS;
+			dataPTotalUp = [[0 for col in range(prej)] for row in range(prek)]	 ##data for Total UP of each element
+			dataPTotalDown = [[0 for col in range(prej)] for row in range(prek)]	##data for Total DOWN of each element
+			datasUp = [[0 for col in range(prej)] for row in range(prek)]	##data for s UP of each element
+			datasDown = [[0 for col in range(prej)] for row in range(prek)]
+			datapUp = [[0 for col in range(prej)] for row in range(prek)]
+			datapDown = [[0 for col in range(prej)] for row in range(prek)]
+			datadxyzUp = [[0 for col in range(prej)] for row in range(prek)]
+			datadxyzDown = [[0 for col in range(prej)] for row in range(prek)]
+			datad2Up = [[0 for col in range(prej)] for row in range(prek)]
+			datad2Down = [[0 for col in range(prej)] for row in range(prek)]
+			calclines = NEDOS + 7
+			for j in range(len(nums)):		#if have 3 elements ,j = 0 ,1 ,2
+				for k in range(NEDOS):
+					for i in range(int(nums[j])):
+						rl = calclines + k + (NEDOS+1)*i
+						datasUp[k][j] += float(lines[rl].split()[1]);
+						datasDown[k][j] += -float(lines[rl].split()[2]);
+						datapUp[k][j] += (float(lines[rl].split()[3]) + float(lines[rl].split()[5]) + float(lines[rl].split()[7]));
+						datapDown[k][j] += (-float(lines[rl].split()[4]) - float(lines[rl].split()[6]) - float(lines[rl].split()[8]));
+						datadxyzUp[k][j] += (float(lines[rl].split()[9]) + float(lines[rl].split()[11]) + float(lines[rl].split()[13]));
+						datadxyzDown[k][j] += (-float(lines[rl].split()[10]) - float(lines[rl].split()[12]) - float(lines[rl].split()[14]));
+						datad2Up[k][j] += (float(lines[rl].split()[15]) + float(lines[rl].split()[17]));
+						datad2Down[k][j] += (-float(lines[rl].split()[16]) - float(lines[rl].split()[18]));
+					dataPTotalUp[k][j] = datasUp[k][j] + datapUp[k][j] + datadxyzUp[k][j] + datad2Up[k][j];
+					dataPTotalDown[k][j] = datasDown[k][j] + datapDown[k][j] + datadxyzDown[k][j] + datad2Down[k][j];
+				calclines += int(nums[j])*(NEDOS+1);
+			with open('pdos.csv', 'w') as f:
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotalUp[i]))
+					for j in range(len(nums)):
+						f.write(','+str(dataPTotalUp[i][j]))
+						f.write(','+str(datasUp[i][j]))
+						f.write(','+str(datapUp[i][j]))
+						f.write(','+str(datadxyzUp[i][j]))
+						f.write(','+str(datad2Up[i][j]))
+					f.write('\n')
+				f.write('\n')	
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotalDown[i]))
+					for j in range(len(nums)):
+						f.write(','+str(dataPTotalDown[i][j]))
+						f.write(','+str(datasDown[i][j]))
+						f.write(','+str(datapDown[i][j]))
+						f.write(','+str(datadxyzDown[i][j]))
+						f.write(','+str(datad2Down[i][j]))
+					f.write('\n')
+					
+		else:
+			with open('dos.csv', 'w') as f:
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotalUp[i]))
+					f.write('\n')
+				f.write('\n')	
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotalDown[i]))
+					f.write('\n')
+	else:
+		dataEnergy = [0 for col in range(NEDOS)];  ##data for Energy
+		dataTotal = [0 for col in range(NEDOS)];	##data for Total
+		for i in range(NEDOS):
+			dataEnergy[i] = float(lines[i+6].split()[0])-fermi;
+			dataTotal[i] = float(lines[i+6].split()[1]);
+		if LORBITNUM == 1:
+			prej = len(nums);
+			prek = NEDOS;
+			dataPTotal = [[0 for col in range(prej)] for row in range(prek)]	 ##data for Total of each element
+			datas = [[0 for col in range(prej)] for row in range(prek)]	##data for s UP of each element
+			datap = [[0 for col in range(prej)] for row in range(prek)]
+			datadxyz = [[0 for col in range(prej)] for row in range(prek)]
+			datad2 = [[0 for col in range(prej)] for row in range(prek)]
+			calclines = NEDOS + 7
+			for j in range(len(nums)):		#if have 3 elements ,j = 0 ,1 ,2
+				for k in range(NEDOS):
+					for i in range(int(nums[j])):
+						rl = calclines + k + (NEDOS+1)*i
+						datas[k][j] += float(lines[rl].split()[1]);
+						datap[k][j] += (float(lines[rl].split()[2]) + float(lines[rl].split()[3]) + float(lines[rl].split()[4]));
+						datadxyz[k][j] += (float(lines[rl].split()[5]) + float(lines[rl].split()[6]) + float(lines[rl].split()[7]));
+						datad2[k][j] += (-float(lines[rl].split()[8]) - float(lines[rl].split()[9]));
+					dataPTotal[k][j] = datas[k][j] + datap[k][j] + datadxyz[k][j] + datad2[k][j];
+				calclines += int(nums[j])*(NEDOS+1);
+			with open('pdos.csv', 'w') as f:
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotal[i]))
+					for j in range(len(nums)):
+						f.write(','+str(dataPTotal[i][j]))					
+					#'''
+						f.write(','+str(datas[i][j]))
+						f.write(','+str(datap[i][j]))
+						f.write(','+str(datadxyz[i][j]))
+						f.write(','+str(datad2[i][j]))
+					#'''
+					f.write('\n')	
+		else:
+			with open('dos.csv', 'w') as f:
+				for i in range(NEDOS):
+					f.write(str(dataEnergy[i]))
+					f.write(','+str(dataTotal[i]))
+					f.write('\n')
+
+					
+#!/bin/bash
+f510=$(<5.static/INCAR)
+function to_opt_INCAR(){
+f510="${f510[@]/ISTART = 0/ISTART = 1}"
+f510="${f510[@]/ICHARG = 11/ICHARG = 2}"
+f510="${f510[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
+f510="${f510[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
+f510="${f510[@]/ISMEAR = 1/ISMEAR = -5}"
+f510="${f510[@]/ISMEAR = 0/ISMEAR = -5}"
+}
+to_opt_INCAR
+function to_opt(){
+mkdir 10.optics
+cp 5.static/POTCAR 10.optics/POTCAR
+cp 5.static/CONTCAR 10.optics/POSCAR
+cp 5.static/KPOINTS 10.optics/KPOINTS
+cp 5.static/WAVECAR 10.optics/WAVECAR
+echo "$f510" > 10.optics/INCAR
+echo -e '' >> 10.optics/INCAR
+echo '#= Optics Settings =#' >> 10.optics/INCAR
+echo 'LOPTICS = .TRUE.' >> 10.optics/INCAR
+echo 'NBANDS = 800' >> 10.optics/INCAR
+echo 'NEDOS = 2000' >> 10.optics/INCAR
+echo 'LRPA = .TRUE.' >> 10.optics/INCAR
+echo 'NPAR = 1' >> 10.optics/INCAR
+}
+to_opt
+
+#!/bin/bash
+f510=$(<5.static/INCAR)
+function to_opt_INCAR(){
+f510="${f510[@]/ISTART = 0/ISTART = 1}"
+f510="${f510[@]/ICHARG = 11/ICHARG = 2}"
+f510="${f510[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
+f510="${f510[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
+f510="${f510[@]/ISMEAR = -5/ISMEAR = 0}"
+f510="${f510[@]/ISMEAR = 1/ISMEAR = 0}"
+}
+to_opt_INCAR
+function to_opt(){
+mkdir 10.optics
+cp 5.static/POTCAR 10.optics/POTCAR
+cp 5.static/CONTCAR 10.optics/POSCAR
+cp 5.static/KPOINTS 10.optics/KPOINTS
+cp 5.static/WAVECAR 10.optics/WAVECAR
+echo "$f510" > 10.optics/INCAR
+echo -e '' >> 10.optics/INCAR
+echo '#= Optics Settings =#' >> 10.optics/INCAR
+echo 'LOPTICS = .TRUE.' >> 10.optics/INCAR
+echo 'NBANDS = 800' >> 10.optics/INCAR
+echo 'NEDOS = 20000' >> 10.optics/INCAR
+echo 'LRPA = .TRUE.' >> 10.optics/INCAR
+echo 'NPAR = 1' >> 10.optics/INCAR
+}
+to_opt
+
+with open('OUTCAR', 'r') as f:
+	## Modify the parameters if necessary ##
+	NEDOS = 2000;	##NEDOS flag in file INCAR
+	direction = 3;   ## optical direction, 1 for (100), 2 for (010), 3 for (001)
+	## ##
+	lines = f.readlines();
+	imgmin = 3 + lines.index('  frequency dependent IMAGINARY DIELECTRIC FUNCTION (independent particle, no local field effects) density-density\n');
+	realmin = 3 + lines.index('  frequency dependent      REAL DIELECTRIC FUNCTION (independent particle, no local field effects) density-density\n');
+	dataEn = [0 for col in range(NEDOS)]   ## data for Energy
+	imgdataOpt = [0 for col in range(NEDOS)] ## data for img	
+	realdataOpt = [0 for col in range(NEDOS)] ## data for real
+	refdataOpt = [0 for col in range(NEDOS)] ## data for Reflectivity
+	absdataOpt = [0 for col in range(NEDOS)] ## data for Absorption rate
+	for i in range(NEDOS):
+		dataEn[i] = float(lines[imgmin + i].split()[0]);
+		imgdataOpt[i] = float(lines[imgmin + i].split()[direction]);
+		realdataOpt[i] = float(lines[realmin + i].split()[direction]);
+		absdataOpt[i] = 2**0.5 * dataEn[i] * ((realdataOpt[i]**2 + imgdataOpt[i]**2)**0.5 - realdataOpt[i])**0.5;
+		reftemp = complex(realdataOpt[i],imgdataOpt[i]);   ##create a temp complex number
+		refdataOpt[i] = abs((reftemp**0.5-1)/(reftemp**0.5+1))**2;
+	with open('optdata.csv', 'w') as f:
+		for i in range(NEDOS):
+			f.write(str(dataEn[i]))
+			f.write(','+str(imgdataOpt[i]))
+			f.write(','+str(realdataOpt[i]))
+			f.write(','+str(refdataOpt[i]))
+			f.write(','+str(absdataOpt[i]))
+			f.write('\n')
+
+#!/bin/bash
+#for INCAR setting
+f=$(<5.relax/INCAR)
+function to_static_INCAR(){
+f="${f[@]/IBRION/#IBRION}"
+f="${f[@]/NSW/#NSW}"
+f="${f[@]/ISIF/#ISIF}"
+}
+to_static_INCAR
+function to_static(){
+mkdir 5.static
+cp 5.relax/POTCAR 5.static/POTCAR
+cp 5.relax/CONTCAR 5.static/POSCAR
+cp 5.relax/KPOINTS 5.static/KPOINTS
+echo "$f" > 5.static/INCAR
+}
+to_static
+
+#!/bin/bash
+#for INCAR setting
+f=$(<5.relax/INCAR)
+function to_static_INCAR(){
+f="${f[@]/IBRION/#IBRION}"
+f="${f[@]/NSW/#NSW}"
+f="${f[@]/ISIF/#ISIF}"
+f="${f[@]/LWAVE = .FALSE./LWAVE = .TRUE.}"
+}
+to_static_INCAR
+function to_static(){
+mkdir 5.static
+cp 5.relax/POTCAR 5.static/POTCAR
+cp 5.relax/CONTCAR 5.static/POSCAR
+cp 5.relax/KPOINTS 5.static/KPOINTS
+echo "$f" > 5.static/INCAR
+}
+to_static
+
+#!/bin/sh
+## Function: The value greater or less than a certain z-axis is selected to relax.By Ren JS
+## Usage, ./thisfile.sh or ./thisfile.sh > 0.01
+## Setting ##
+value='>0.24'    ##  `>0.01` is means if the z of atom >0.01, the atom will be selected to relax(add T T T),nor add F F F
+file_name=POSCAR-0
+dos2unix $file_name
+out_file_name=POSCAR
+## Done ##
+head -n 7 $file_name > $out_file_name
+echo -e "Selective\nDirect" >> $out_file_name
+## the number of last line at POSCAR
+for i in {9..168}
+do
+low=`sed -n ${i}p $file_name`
+z=`sed -n ${i}p $file_name | awk '{print $3}'`
+check_value=`echo "${z}${value}" | bc` 
+if [ $check_value -eq 1 ]; then
+echo $low T T T >> $out_file_name
+else
+echo $low F F F >> $out_file_name
+fi
+done
+node4:slots=20
+
+#!/bin/bash
+#SBATCH -J GaN
+#SBATCH -N 1
+#SBATCH -n 32
+#SBATCH -p szsc_c
+NP=32
+module purge
+module load compiler/intel/2017.5.239
+module load mpi/hpcx/2.4.1/intel-2017.5.239
+echo -n "start time " > time
+date >> time
+srun --mpi=pmix_v3 /public/software/apps/vasp/5.4.4/hpcx-2.4.1-intel2017/vasp_std &> output
+echo -n "end time " >> time ; date >> time
+cat time >> output
+#!/bin/bash
+mpirun -np 20 -hostfile host  vasp_std
+#!/bin/sh
+APP_NAME=intelY_mid
+NP=60
+NP_PER_NODE=12
+RUN="RAW"
+CURDIR=$PWD
+
+VASP=/home-yw/Soft/Vasp5.4/vasp_std
+source  /home-yw/env/intel-12.1.sh
+source  /home-yw/env/openmpi-1.6.5-intel.sh
+
+cd $CURDIR
+
+#start creating .nodelist
+rm -rf $CURDIR/nodelist >& /dev/null
+for i in `echo $LSB_HOSTS`
+do
+    echo "$i" >> $CURDIR/nodelist
+done
+nodelist=$(cat $CURDIR/nodelist | uniq | awk '{print $1}' | tr '\n' ',')
+
+#
+echo -n "start time  " > time
+date >> time
+
+# for GK & YW users
+touch WAVECAR PCDAT IBZKPT XDATCAR OSZICAR CONTCAR CHG PROCAR OUTCAR EIGENVAL DOSCAR CHGCAR
+sleep 10
+
+mpirun -np $NP -machinefile $CURDIR/nodelist $VASP  &> vasp.out
+echo -n "end   time  " >> time ; date >> time
+cat time >> vasp.out
+#
+exit
+#PBS -N test
+#PBS -l nodes=1:ppn=20
+#PBS -j oe
+#PBS -l walltime=2400:00:00
+#PBS -q high
+
+echo "This job is "$PBS_JOBID@$PBS_QUEUE
+cd $PBS_O_WORKDIR
+pwd
+nproc=$(cat $PBS_NODEFILE | wc -l)
+echo $nproc
+mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
+##RunCASTEP.sh BaSnO3
+rm *i -rf
+rm V* -rf
+rm SmNi -rf
+rm NiSm -rf
+##!----------------##
+4 uppercase letters are identifiers, please do not modify!!
+##!----------------##
+##This file is to assist in completing the setting of NELECT, please modify it to the corresponding value, the format is as follow:
+#Location_symbol(Don't modify) Name_of_atoms Number_of_atoms Element_valence Number_of_electrons
+
+AAAA Sm 16 3 11
+BBBB Ni 16 3 16
+OOOO O 48 -2 6
+
+#If spin is not considered, then magmom can be set freely without affecting the result.
+#4_P the value of ISPIN
+PPPP 2
+Magnetic moment of B under normal conditions(MNNM):
+-2 2*2 -2 2 2*-2 2*2 2*-2 2*2 2*-2 2
+Magnetic moment during replacement or B vacancy(MRRM):
+-2 2*2 -2 2 2*-2 2 2*-2 2*2 2*-2 2
+
+The coordination of Ai(CCAI):
+0.25 0.5 0.25
+The coordination of Bi(CCBI):
+0.25 0.5 0.25
+The coordination of Oi(CCOI):
+0.32 0.73 0.305
+The rows of vacancy of A(RRVA):
+11
+The rows of vacancy of B(RRVB):
+32
+The rows of vacancy of O(RRVO):
+47
+The rows of AB(RRAB):
+32
+The rows of BA(RRBA):
+11
+
 
 #!/bin/bash
 ## Finction:To automatically generate defects
@@ -1339,9 +3068,6 @@ if isspin:
             f.write('\n')
 
 
-
-
-
 #!/bin/bash
 #for INCAR setting
 f57=$(<5.static/INCAR)
@@ -1734,6 +3460,7 @@ nproc=$(cat $PBS_NODEFILE | wc -l)
 echo $nproc
 mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
 ##RunCASTEP.sh BaSnO3
+
 rm *i -rf
 rm V* -rf
 rm SmNi -rf
@@ -2986,8 +4713,6 @@ echo "########  Done ########"
 echo "#######################"
 
 
-
-
 ## Divide the EIGENVAL into spin up and spin down to fit boltztrap.
 with open('EIGENVAL', 'r') as fcheck:
     linescheck = fcheck.readlines()
@@ -3073,9 +4798,6 @@ if isspin:
             for j in range(bars):
                 f.write(','+str(datadown[i][j]))
             f.write('\n')
-
-
-
 
 
 #!/bin/bash
@@ -3471,1741 +5193,1238 @@ echo $nproc
 mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
 ##RunCASTEP.sh BaSnO3
 
-rm *i -rf
-rm V* -rf
-rm SmNi -rf
-rm NiSm -rf
-##!----------------##
-4 uppercase letters are identifiers, please do not modify!!
-##!----------------##
-##This file is to assist in completing the setting of NELECT, please modify it to the corresponding value, the format is as follow:
-#Location_symbol(Don't modify) Name_of_atoms Number_of_atoms Element_valence Number_of_electrons
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 04:32:00 2024
+Band_gap:Bagging算法
+@author: zhangchengyu
+"""
 
-AAAA Sm 16 3 11
-BBBB Ni 16 3 16
-OOOO O 48 -2 6
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import BaggingRegressor
+from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.metrics import mean_squared_error,mean_absolute_error, r2_score
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-#If spin is not considered, then magmom can be set freely without affecting the result.
-#4_P the value of ISPIN
-PPPP 2
-Magnetic moment of B under normal conditions(MNNM):
--2 2*2 -2 2 2*-2 2*2 2*-2 2*2 2*-2 2
-Magnetic moment during replacement or B vacancy(MRRM):
--2 2*2 -2 2 2*-2 2 2*-2 2*2 2*-2 2
+# 读取Excel数据
+df = pd.read_excel(r"D:\data\STO_RNO大论文数据\superlattice_chongsuan\2023.6.5结果汇总\Re_STO_Ni\机器学习\bandgap_machlearn.xlsx")
+df.drop(["Re", "O radius", "Ni radius"], axis=1, inplace=True)
 
-The coordination of Ai(CCAI):
-0.25 0.5 0.25
-The coordination of Bi(CCBI):
-0.25 0.5 0.25
-The coordination of Oi(CCOI):
-0.32 0.73 0.305
-The rows of vacancy of A(RRVA):
-11
-The rows of vacancy of B(RRVB):
-32
-The rows of vacancy of O(RRVO):
-47
-The rows of AB(RRAB):
-32
-The rows of BA(RRBA):
-11
+# 将特征变量和目标变量分开
+X = df.drop(['Eg'], axis=1)
+y = df['Eg']
+
+# 数据标准化
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
+# BaggingRegressor模型
+bagging_model = BaggingRegressor()
 
-#!/bin/bash
-## Finction:To automatically generate defects
-
-# To add parameters from config.txt
-name_A=`grep "AAAA" config.txt | awk '{print \$2}'`
-name_B=`grep "BBBB" config.txt | awk '{print \$2}'`
-name_O=`grep "OOOO" config.txt | awk '{print \$2}'`
-num_A=`grep "AAAA" config.txt | awk '{print \$3}'`
-num_B=`grep "BBBB" config.txt | awk '{print \$3}'`
-num_O=`grep "OOOO" config.txt | awk '{print \$3}'`
-val_A=`grep "AAAA" config.txt | awk '{print \$4}'`
-val_B=`grep "BBBB" config.txt | awk '{print \$4}'`
-val_O=`grep "OOOO" config.txt | awk '{print \$4}'`
-ele_A=`grep "AAAA" config.txt | awk '{print \$5}'`
-ele_B=`grep "BBBB" config.txt | awk '{print \$5}'`
-ele_O=`grep "OOOO" config.txt | awk '{print \$5}'`
-ISPIN=`grep "PPPP" config.txt | awk '{print \$2}'`
-let tmp=1+`grep -n "MNNM" config.txt |cut -f1 -d:`
-nor_M=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "MRRM" config.txt |cut -f1 -d:`
-rep_M=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "CCAI" config.txt |cut -f1 -d:`
-c_Ai=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "CCBI" config.txt |cut -f1 -d:`
-c_Bi=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "CCOI" config.txt |cut -f1 -d:`
-c_Oi=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "RRVA" config.txt |cut -f1 -d:`
-r_VA=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "RRVB" config.txt |cut -f1 -d:`
-r_VB=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "RRVO" config.txt |cut -f1 -d:`
-r_VO=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "RRAB" config.txt |cut -f1 -d:`
-r_AB=`sed -n "${tmp}p" config.txt`
-let tmp=1+`grep -n "RRBA" config.txt |cut -f1 -d:`
-r_BA=`sed -n "${tmp}p" config.txt`
-r_nele=`grep -n "NELECT" nopure/1/INCAR |cut -f1 -d:`
-if [ -z $r_nele ]; then
-    r_nele=10
-    sed -i "${r_nele}i \#NELECT = " nopure/1/INCAR
-fi
-r_mag=`grep -n "MAGMOM" nopure/1/INCAR |cut -f1 -d:`
-if [ -z $r_mag ]; then
-    r_mag=34
-    sed -i "${r_mag}i \#MAGMOM = " nopure/1/INCAR
-fi
-let total_Nelect=num_A*ele_A+num_B*ele_B+num_O*ele_O
-
-function makedir(){
-mkdir ${name_A}i ${name_B}i ${name_O}i
-mkdir V${name_A} V${name_B} V${name_O}
-mkdir ${name_A}${name_B} ${name_B}${name_A}
+# 超参数搜索范围
+param_dist = {
+    'n_estimators': [50, 100, 150],
+    'max_samples': [0.5, 0.7, 1.0],
+    'max_features': [0.5, 0.7, 1.0]
 }
 
-function gen_i(){
-#For Ai
-mkdir ${name_A}i/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_A}i/1
-cd ${name_A}i/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A+1
-let temp_B=num_B
-let temp_O=num_O
-let temp=total_Nelect+ele_A-val_A
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
-fi
-let temp=8+num_A
-sed -i "${temp}a   ${c_Ai}" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
+# 随机搜索
+random_search = RandomizedSearchCV(bagging_model, param_distributions=param_dist, n_iter=10, cv=5, random_state=42)
+random_search.fit(X_train, y_train)
 
-#For Bi
-mkdir ${name_B}i/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_B}i/1
-cd ${name_B}i/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A
-let temp_B=num_B+1
-let temp_O=num_O
-let temp=total_Nelect+ele_B-val_B
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M 0 ${temp_O}*0" INCAR
-fi
-let temp=8+num_A+num_B
-sed -i "${temp}a   ${c_Bi}" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
+# 输出最佳参数
+best_params = random_search.best_params_
+print("最佳超参数：", best_params)
 
-#For Oi
-mkdir ${name_O}i/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_O}i/1
-cd ${name_O}i/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A
-let temp_B=num_B
-let temp_O=num_O+1
-let temp=total_Nelect+ele_O-val_O
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
-fi
-let temp=8+num_A+num_B+num_O
-sed -i "${temp}a   ${c_Oi}" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
+# 使用最佳参数训练最终模型
+best_bagging_model = BaggingRegressor(
+    n_estimators=best_params['n_estimators'],
+    max_samples=best_params['max_samples'],
+    max_features=best_params['max_features'],
+    random_state=42
+)
+best_bagging_model.fit(X_train, y_train)
+
+# 获取所有基础模型的特征重要性
+
+all_feature_importance = np.zeros(X.shape[1])
+
+for base_model in best_bagging_model.estimators_:
+    current_feature_importance = base_model.feature_importances_
+    all_feature_importance += base_model.feature_importances_
+    print("all_feature_importance shape:", all_feature_importance.shape)
+print("current_feature_importance shape:", current_feature_importance.shape)
+# 计算平均特征重要性
+average_feature_importance = all_feature_importance / len(best_bagging_model.estimators_)
+
+# 将特征和其对应的平均重要性合并为DataFrame
+average_feature_importance_df = pd.DataFrame({'Feature': X.columns, 'Importance': average_feature_importance})
+
+# 根据平均重要性降序排序
+average_feature_importance_df = average_feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# 打印特征排序和平均重要性
+print("特征排序和平均重要性：")
+print(average_feature_importance_df)
+
+# 可视化平均特征排序图
+plt.figure(figsize=(10, 6))
+#设置字体
+
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+title_fontsize = 16
+label_fontsize = 16
+sns.barplot(x='Importance', y='Feature', data=average_feature_importance_df)
+plt.title("Bagging",fontsize=title_fontsize)
+plt.xlabel("Importance",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+plt.savefig('picture/band_Bagging.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+#%%# 可视化特征排序图
+plt.figure(figsize=(10, 6))
+fig, ax = plt.subplots()
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+ax.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+title_fontsize = 16
+label_fontsize = 16
+sns.barplot(x='Importance', y='Feature', data=average_feature_importance_df)
+plt.title("Bagging",fontsize=title_fontsize)
+plt.xlabel("Importance",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+plt.savefig('picture/band_Bagging.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+#%%
+# 预测
+y_pred = best_bagging_model.predict(X_test)
+
+# 评估模型性能
+mse = mean_squared_error(y_test, y_pred)
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# 打印回归指标
+print("最佳超参数：", best_params)
+print("最佳模型回归指标：")
+print("Mean Squared Error:", mse)
+print("Mean Absolute Error:", mae)
+print("R-squared:", r2)
+
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 02:02:59 2024
+band计算：GBR梯度上升算法
+@author: zhangchengyu
+"""
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+import optuna
+
+# 读取Excel数据
+df = pd.read_excel(r"D:\data\STO_RNO大论文数据\superlattice_chongsuan\2023.6.5结果汇总\Re_STO_Ni\机器学习\bandgap_machlearn.xlsx")
+df.drop(["Re", "O radius", "Ni radius"], axis=1, inplace=True)
+
+# 将特征变量和目标变量分开
+X = df.drop(['Eg'], axis=1)
+y = df['Eg']
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#%%
+
+
+# 特征选择
+k_best = SelectKBest(f_regression, k=7)
+X_selected = k_best.fit_transform(X, y)
+
+# 获取特征重要性（系数）
+feature_importance = k_best.scores_
+
+# 将特征和其对应的重要性合并为DataFrame
+feature_importance_df = pd.DataFrame({'Feature': X.columns, 'Importance': feature_importance*0.01})
+
+# 根据重要性降序排序
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# 打印特征排序和重要性
+print("特征排序和重要性：")
+print(feature_importance_df)
+
+# 可视化特征排序图
+plt.figure(figsize=(10, 6))
+fig, ax = plt.subplots()
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+ax.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+title_fontsize = 16
+label_fontsize = 16
+sns.barplot(x='Importance', y='Feature', data=feature_importance_df)
+plt.title("GBR",fontsize=title_fontsize)
+plt.xlabel("Importance",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+plt.savefig('picture/band_GBR.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+#%%
+# 定义目标函数
+def objective(trial):
+    # 超参数搜索范围
+    params = {
+        'learning_rate': trial.suggest_float('learning_rate', 0.001, 0.1),
+        'n_estimators': trial.suggest_int('n_estimators', 100, 400),
+        'max_depth': trial.suggest_int('max_depth', 2, 6),
+        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
+        'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
+        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1,4)
+    }
+
+    gb_model = GradientBoostingRegressor(**params)
+
+    # 特征选择
+    k_best = SelectKBest(f_regression,k=6)
+    X_train_selected = k_best.fit_transform(X_train, y_train)
+    X_test_selected = k_best.transform(X_test)
+
+    # 模型训练
+    gb_model.fit(X_train_selected, y_train)
+
+    # 模型预测
+    y_pred = gb_model.predict(X_test_selected)
+
+    # 模型评估
+    mse = mean_squared_error(y_test, y_pred)
+    return mse
+
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=200)
+
+# 输出最佳参数和最佳得分
+best_params = study.best_params
+print("最佳超参数：", best_params)
+
+# 使用最佳参数训练最终模型
+best_gb_model = GradientBoostingRegressor(
+    learning_rate=best_params['learning_rate'],
+    n_estimators=best_params['n_estimators'],
+    max_depth=best_params['max_depth'],
+    subsample=best_params['subsample'],
+    min_samples_split=best_params['min_samples_split'],
+    min_samples_leaf=best_params['min_samples_leaf']
+)
+best_gb_model.fit(X_train, y_train)
+
+# 使用最佳模型预测
+y_pred_best = best_gb_model.predict(X_test)
+
+# 计算最佳模型的评估指标
+mse_best = mean_squared_error(y_test, y_pred_best)
+mae_best = mean_absolute_error(y_test, y_pred_best)
+r2_best = r2_score(y_test, y_pred_best)
+
+# 打印最佳模型的回归指标
+print("\n最佳模型回归指标：")
+print("Mean Squared Error:", mse_best)
+print("Mean Absolute Error:", mae_best)
+print("R-squared:", r2_best)
+
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jan 16 23:51:34 2024
+band计算，随机森林模型。
+@author: zhangchengyu
+"""
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+import optuna
+
+# 读取Excel数据
+df = pd.read_excel(r"D:\data\STO_RNO大论文数据\superlattice_chongsuan\2023.6.5结果汇总\Re_STO_Ni\机器学习\bandgap_machlearn.xlsx")
+df.drop(["Re", "O radius", "Ni radius"], axis=1, inplace=True)
+
+# 将特征变量和目标变量分开
+X = df.drop(['Eg'], axis=1)
+y = df['Eg']
+
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#%% 随机森林模型
+
+# 训练随机森林模型获取特征重要性
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# 获取特征重要性（系数）
+feature_importance = rf_model.feature_importances_
+
+# 将特征和其对应的重要性合并为DataFrame
+feature_importance_df = pd.DataFrame({'Feature': X_train.columns, 'Importance': feature_importance})
+
+# 根据重要性降序排序
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# 打印特征排序和重要性
+print("特征排序和重要性：")
+print(feature_importance_df)
+
+# 可视化特征排序图
+plt.figure(figsize=(10, 6))
+fig, ax = plt.subplots()
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+ax.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+title_fontsize = 16
+label_fontsize = 16
+sns.barplot(x='Importance', y='Feature', data=feature_importance_df)
+plt.title("RF",fontsize=title_fontsize)
+plt.xlabel("Importance",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+
+plt.savefig('picture/band_RF.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+# 选择排名前6的特征
+selected_features = feature_importance_df.head(6)['Feature']
+
+# 输出选择的特征
+print("\n选择的特征：", selected_features)
+
+# 进行特征选择
+X_train_selected = X_train[selected_features]
+X_test_selected = X_test[selected_features]
+
+#%%
+
+# 定义目标函数，用于评估超参数组合
+# 定义目标函数
+def objective(trial):
+    n_estimators = trial.suggest_int('n_estimators', 50, 200)
+    max_depth = trial.suggest_int('max_depth', 2, 6)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 5)
+
+    # 使用随机森林回归模型
+    rf_model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        random_state=42
+    )
+
+    # 训练模型
+    rf_model.fit(X_train, y_train)
+
+    # 预测
+    y_pred = rf_model.predict(X_test)
+
+    # 计算评估指标
+    mse = mean_squared_error(y_test, y_pred)
+    return mse
+
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=200)
+
+# 输出最佳参数和最佳得分
+best_params = study.best_params
+print("\n最佳参数：", best_params)
+
+# 使用最佳参数训练最终模型
+best_rf_model = RandomForestRegressor(
+    n_estimators=best_params['n_estimators'],
+    max_depth=best_params['max_depth'],
+    min_samples_split=best_params['min_samples_split'],
+    min_samples_leaf=best_params['min_samples_leaf'],
+    random_state=42
+)
+best_rf_model.fit(X_train_selected, y_train)
+
+#%%
+
+# 使用最佳模型预测
+y_pred_best = best_rf_model.predict(X_test_selected)
+
+# 计算最佳模型的评估指标
+mse_best = mean_squared_error(y_test, y_pred_best)
+mae_best = mean_absolute_error(y_test, y_pred_best)
+r2_best = r2_score(y_test, y_pred_best)
+
+# 打印最佳模型的回归指标
+print("\n最佳模型回归指标：")
+print("Mean Squared Error:", mse_best)
+print("Mean Absolute Error:", mae_best)
+print("R-squared:", r2_best)
+
+# 可视化最佳模型的预测结果与真实结果的对比散点图
+plt.figure(figsize=(8, 8))
+plt.scatter(y_test, y_pred_best, color='blue', alpha=0.5)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], linestyle='--', color='red', linewidth=2)
+plt.title("True vs Predicted Results (Best Random Forest Regression Model)")
+plt.xlabel("True Results")
+plt.ylabel("Predicted Results")
+plt.show()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 04:06:21 2024
+band_gap:XGB方法
+@author: zhangchengyu
+"""
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from xgboost import XGBRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import RandomizedSearchCV
+import numpy as np
+
+# 读取Excel数据
+df = pd.read_excel(r"D:\data\STO_RNO大论文数据\superlattice_chongsuan\2023.6.5结果汇总\Re_STO_Ni\机器学习\bandgap_machlearn.xlsx")
+df.drop(["Re", "O radius", "Ni radius"], axis=1, inplace=True)
+
+# 将特征变量和目标变量分开
+X = df.drop(['Eg'], axis=1)
+y = df['Eg']
+
+# 数据标准化
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+#%%
+# 定义超参数搜索范围
+param_dist = {
+    'n_estimators': np.arange(100, 300, 10),
+    'learning_rate': np.arange(0.01, 0.2, 0.01),
+    'max_depth': np.arange(2, 5, 1),
+    'subsample': np.arange(0.8, 1.1, 0.1),
+    'colsample_bytree': np.arange(0.8, 1.1, 0.1)
 }
 
-function gen_v(){
-#For VA
-mkdir V${name_A}/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_A}/1
-cd V${name_A}/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A-1
-let temp_B=num_B
-let temp_O=num_O
-let temp=total_Nelect-ele_A+val_A
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
-fi
-sed -i "${r_VA}d" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
+# 创建RandomizedSearchCV对象
+random_search = RandomizedSearchCV(
+    estimator=XGBRegressor(),
+    param_distributions=param_dist,
+    n_iter=100,  # 调整迭代次数
+    cv=5,
+    scoring='neg_mean_squared_error',
+    random_state=42
+)
 
-#For VB
-mkdir V${name_B}/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_B}/1
-cd V${name_B}/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A
-let temp_B=num_B-1
-let temp_O=num_O
-let temp=total_Nelect-ele_B+val_B
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 ${rep_M} ${temp_O}*0" INCAR
-fi
-sed -i "${r_VB}d" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
+# 执行超参数搜索
+random_search.fit(X_train, y_train)
 
-#For VO
-mkdir V${name_O}/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS V${name_O}/1
-cd V${name_O}/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A
-let temp_B=num_B
-let temp_O=num_O-1
-let temp=total_Nelect-ele_O+val_O
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M ${temp_O}*0" INCAR
-fi
-sed -i "${r_VO}d" POSCAR
-sed -i "7c   ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
-}
 
-function gen_ABBA(){
-#For AB
-mkdir ${name_A}${name_B}/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_A}${name_B}/1
-cd ${name_A}${name_B}/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A+1
-let temp_B=num_B-1
-let temp_O=num_O
-let temp=total_Nelect+ele_A-ele_B-val_A+val_B
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $rep_M ${temp_O}*0" INCAR
-fi
-temp=`sed -n "${r_AB}p" POSCAR`
-sed -i "${r_AB}d" POSCAR
-let temp1=8+num_A
-sed -i "${temp1}a ${temp}" POSCAR
-sed -i "7c ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
 
-#For BA
-mkdir ${name_B}${name_A}/1
-cp nopure/1/INCAR nopure/5.static/CONTCAR nopure/1/POTCAR nopure/1/KPOINTS ${name_B}${name_A}/1
-cd ${name_B}${name_A}/1/
-mv CONTCAR POSCAR
-sed -i 's/ISIF = 3/ISIF = 2/g' INCAR
-let temp_A=num_A-1
-let temp_B=num_B+1
-let temp_O=num_O
-let temp=total_Nelect-ele_A+ele_B+val_A-val_B
-sed -i "${r_nele}c NELECT = ${temp}" INCAR
-if [ $ISPIN = '2' ]; then
-    sed -i "${r_mag}c MAGMOM = ${temp_A}*0 $nor_M 0 ${temp_O}*0" INCAR
-fi
-temp=`sed -n "${r_BA}p" POSCAR`
-sed -i "${r_BA}d" POSCAR
-let temp1=7+num_A+num_B
-sed -i "${temp1}a ${temp}" POSCAR
-sed -i "7c ${temp_A} ${temp_B} ${temp_O}" POSCAR
-cd ../..
-}
+# 使用最佳参数训练最终模型
+best_xgb_model = random_search.best_estimator_
 
-function makedirtemp(){
-mkdir ${name_A}i ${name_B}i ${name_O}i
-}
-makedir
-##makedirtemp
-gen_i
-gen_v
-gen_ABBA
-#!/bin/bash
-#To change the ##LLLL## for loop submit file
-## change the set for loop file##
-file_name=c_loop_ks.sh
-change_file_name=loop_ks.slurm
-submit=sbatch
-if [ -z "$1" ]; then
-echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
+# 在测试集上进行预测
+y_pred_best = best_xgb_model.predict(X_test)
 
-if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
-if [ "$1" -gt 0 ] 2>/dev/null ;then 
-    echo "Submitting"
-else 
-echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
-fi
 
-let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
-if [ $1 = "-m" ]; then
-sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
-elif [ $1 = "-c" ]; then
-sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
-else
-sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
-fi
 
-$submit ${RVASP_path}/${change_file_name}
-#!/bin/bash
-#To change the ##LLLL## for loop submit file
-## change the set for loop file##
-file_name=c_loop_mgi.sh
-change_file_name=loop_mgi.pbs
-submit=qsub
-if [ -z "$1" ]; then
-echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
-
-if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
-if [ "$1" -gt 0 ] 2>/dev/null ;then 
-    echo "Submitting"
-else 
-echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
-fi
-
-let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
-if [ $1 = "-m" ]; then
-sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
-elif [ $1 = "-c" ]; then
-sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
-else
-sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
-fi
-
-$submit ${RVASP_path}/${change_file_name}
-#!/bin/bash
-#To change the ##LLLL## for loop submit file
-## change the set for loop file##
-file_name=c_loop_sz.sh
-change_file_name=loop_sz.lsf
-submit=bsub
-if [ -z "$1" ]; then
-echo "Error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
-
-if [[ $1 != "-c" ]] && [[ $1 != "-m" ]]; then
-if [ "$1" -gt 0 ] 2>/dev/null ;then 
-    echo "Submitting"
-else 
-echo "Parameter input error, usage: bash $RVASP_path/$file_name <-c> <-m> [temp1] [temp2]"
-echo "Please read the README ($RVASP_path) carefully"
-exit 0
-fi
-fi
-
-let tmp=1+`grep -n "LLLL" ${RVASP_path}/${change_file_name} |cut -f1 -d:`
-if [ $1 = "-m" ]; then
-sed -i "${tmp}c main $2 $3" ${RVASP_path}/${change_file_name}
-elif [ $1 = "-c" ]; then
-sed -i "${tmp}c choose $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}" ${RVASP_path}/${change_file_name}
-else
-sed -i "${tmp}c loop $1 $2" ${RVASP_path}/${change_file_name}
-fi
-
-$submit ${RVASP_path}/${change_file_name}
-#!/bin/bash
-
-if [ -z "$1" ]; then
-echo "error in parameter"
-exit 0
-fi
-mkdir nofolder4copying
-folderaddress="$(pwd)/nofolder4copying"
-
-function copy1(){
-cp 1 $folderaddress/$1 -r
-}
-
-function copy5.relax(){
-mkdir $folderaddress/$1/5.relax
-copybased 5.relax $1
-rm $folderaddress/$1/5.relax/OUTCAR
-}
-
-function copy5.static(){
-mkdir $folderaddress/$1/5.static
-copybased 5.static $1
-}
-
-function copy7(){
-mkdir $folderaddress/$1/7.chg
-copybased 7.chg $1
-##cp 7.chg/CHGCAR  $folderaddress/$1/7.chg
-cp 7.chg/ELFCAR  $folderaddress/$1/7.chg
-cp 7.chg/ACF.dat  $folderaddress/$1/7.chg
-}
-
-function copy8(){
-mkdir $folderaddress/$1/8.band
-copybased 8.band $1
-cp 8.band/EIGENVAL  $folderaddress/$1/8.band
-cp 8.band/band.csv $folderaddress/$1/8.band
-cp 8.band/banddown.csv  $folderaddress/$1/8.band
-}
-
-function copy9(){
-mkdir $folderaddress/$1/9.dos
-copybased 9.dos $1
-cp 9.dos/DOSCAR  $folderaddress/$1/9.dos
-cp 9.dos/pdos.csv $folderaddress/$1/9.dos
-cp 9.dos/EIGENVAL $folderaddress/$1/9.dos
-cp 9.dos/boltztrap_up.trace $folderaddress/$1/9.dos
-cp 9.dos/boltztrap_down.trace $folderaddress/$1/9.dos
-}
-
-function copy10(){
-mkdir $folderaddress/$i/10.optics
-copybased 10.optics $1
-cp 10.optics/optdata.csv $folderaddress/$1/10.optics
-}
-
-function copybased(){
-cp $1/OUTCAR $folderaddress/$2/$1
-cp $1/CONTCAR $folderaddress/$2/$1
-cp $1/INCAR $folderaddress/$2/$1
-cp $1/POSCAR $folderaddress/$2/$1
-cp $1/KPOINTS $folderaddress/$2/$1
-cp $1/OSZICAR $folderaddress/$2/$1
-cp $1/POTCAR $folderaddress/$2/$1
-}
-
-
-function main(){
-t=$2
-copy1 $1
-if [ $(($t % 2)) == 0 ]; then
-copy5.relax $1
-fi
-if [ $(($t % 3)) == 0 ]; then
-copy5.static $1
-fi
-if [ $(($t % 5)) == 0 ]; then
-copy7 $1
-fi
-if [ $(($t % 7)) == 0 ]; then
-copy8 $1
-fi
-if [ $(($t % 11)) == 0 ]; then
-copy9 $1
-fi
-if [ $(($t % 13)) == 0 ]; then
-copy10 $1
-fi
-}
-
-function loop(){
-for i in $(ls -d */)
-do
-if [[ $i == no* ]] ; then
-continue
-fi
-mkdir $folderaddress/$i
-cd $i
-main $i $1
-cd ..
-done
-}
-
-
-loop $1
-#!/bin/bash
-## 修改POTCAR中的PBE所在位置 ##
-p=~/POTCAR/PAW_PBE
-## Done ##
-if [ $# = 1 ]; then
-cat $p/$1/POTCAR > POTCAR
-elif [ $# = 2 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-elif [ $# = 3 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-elif [ $# = 4 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-cat $p/$4/POTCAR >> POTCAR
-elif [ $# = 5 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-cat $p/$4/POTCAR >> POTCAR
-cat $p/$5/POTCAR >> POTCAR
-elif [ $# = 6 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-cat $p/$4/POTCAR >> POTCAR
-cat $p/$5/POTCAR >> POTCAR
-cat $p/$6/POTCAR >> POTCAR
-elif [ $# = 7 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-cat $p/$4/POTCAR >> POTCAR
-cat $p/$5/POTCAR >> POTCAR
-cat $p/$6/POTCAR >> POTCAR
-cat $p/$7/POTCAR >> POTCAR
-elif [ $# = 8 ]; then
-cat $p/$1/POTCAR > POTCAR
-cat $p/$2/POTCAR >> POTCAR
-cat $p/$3/POTCAR >> POTCAR
-cat $p/$4/POTCAR >> POTCAR
-cat $p/$5/POTCAR >> POTCAR
-cat $p/$6/POTCAR >> POTCAR
-cat $p/$7/POTCAR >> POTCAR
-cat $p/$8/POTCAR >> POTCAR
-fi
-#!/bin/bash
-for i in $(ls -d */)
-do
-if [[ $i == no* ]] ; then
-continue
-fi
-echo -n "$i" >> TOTENfile
-grep TOTEN $i/5.static/OUTCAR|tail -n 1 >> TOTENfile
-done
-#!/bin/bash
-#To add the alias and RVASP_path to .bashrc, including rpotcar, rtotal, rcopy and rmgi.
-chmod a+x bader_charge/bader
-chmod a+x bader_charge/chgsum.pl
-R_path=`pwd`
-if [ "$(cat $HOME/.bashrc | grep RVASP)" == "" ]; then
-cat >> $HOME/.bashrc <<!
-## RVASP Settings Start ##
-export RVASP_path=$R_path
-alias rbtp="bash \$RVASP_path/boltztrap/autoBTP.sh"
-alias rpotcar="bash \$RVASP_path/getPOTCAR.sh"
-alias rtotal="bash \$RVASP_path/getTOTEN.sh"
-alias rcopy="bash \$RVASP_path/copytool.sh"
-alias rmgi="bash \$RVASP_path/c_loop_mgi.sh"
-alias rsz="bash \$RVASP_path/c_loop_sz.sh"
-## RVASP Settings Done ##
-!
-source $HOME/.bashrc
-else
-    echo "RVASP has been installed, or the ~/.bashrc file has not been deleted cleanly"
-fi
-!/bin/bash
-#SBATCH -J GaN
-#SBATCH -N 1
-#SBATCH -n 32
-#SBATCH -p szsc_c
-NP=32
-module purge
-module load compiler/intel/2017.5.239
-module load mpi/hpcx/2.4.1/intel-2017.5.239
-
-function runvasp(){
-echo -n "start time " > time
-date >> time
-srun --mpi=pmix_v3 /public/software/apps/vasp/5.4.4/hpcx-2.4.1-intel2017/vasp_std &> output
-echo -n "end time " >> time ; date >> time
-cat time >> output
-}
-
-
-function check(){
-if [ ! -f "OUTCAR" ] ;then
-echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
-exit
-fi
-tail "OUTCAR" > "OUTINFO"
-outcheck=$(grep "Voluntary context switches:" OUTINFO) 
-rm OUTINFO
-if [ -z "$outcheck" ]
-then
-echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
-echo $PBS_JOBID >> $RVASP_path/errorinfo
-exit
-fi
-}
-
-
-function s5_relax(){
-cp 1 5.relax -r
-cd 5.relax
-runvasp
-check
-cd ..
-}
-
-function s5_static_opt(){
-bash ${RVASP_path}/calc_step/static_opt
-cd 5.static
-runvasp
-check
-cd ..
-}
-
-function s5_static(){
-bash ${RVASP_path}/calc_step/static
-cd 5.static
-runvasp
-check
-cd ..
-}
-
-function s7(){
-bash ${RVASP_path}/calc_step/chg
-cd 7.chg
-runvasp
-check
-cp INCAR INCAR_ELF
-mv INCAR_step INCAR
-bash ${RVASP_path}/bader_charge/get_bader_charge.sh
-cd ..
-}
-
-
-function s8(){
-bash ${RVASP_path}/calc_step/band
-cd 8.band
-runvasp
-check
-python ${RVASP_path}/calc_step/bandscript.py
-cd ..
-}
-
-
-function s9(){
-bash ${RVASP_path}/calc_step/dos
-cd 9.dos
-runvasp
-check
-python ${RVASP_path}/calc_step/dosscript.py
-cd ..
-}
-
-function s10(){
-bash ${RVASP_path}/calc_step/optics
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function s10_metal(){
-bash ${RVASP_path}/calc_step/optics_metal
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function main(){
-if [ $(($1 % 2)) == 0 ]; then
-s5_relax
-fi
-if [ $(($1 % 3)) == 0 ]; then
-if [ $(($2 % 2)) == 0 ]; then
-s5_static_opt
-else
-s5_static
-fi
-fi
-if [ $(($1 % 5)) == 0 ]; then
-if [ $(($2 % 3)) == 0 ]; then
-s7
-else
-s7
-fi
-fi
-if [ $(($1 % 7)) == 0 ]; then
-s8
-fi
-if [ $(($1 % 11)) == 0 ]; then
-if [ $(($2 % 5)) == 0 ]; then
-s9
-else
-s9
-fi
-fi
-if [ $(($1 % 13)) == 0 ]; then
-if [ $(($2 % 7)) == 0 ]; then
-s10_metal
-else
-s10
-if [ -e 10.optics/optdata.csv ]; then
-    rm -r 10.optics
-    s10_metal
-fi
-fi
-fi
-}
-
-function loop(){
-for i in $(ls -d */)
-do
-if [[ $i == no* ]] ; then
-continue
-fi
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-function choose(){
-for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
-do
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-
-####LLLL###Don`t delete this line###
-loop 715 2
-##choose $temp1 $temp2
-##loop $temp1 $temp2
-##main $temp1 $temp2
-#PBS -N rtest_1_20
-#PBS -l nodes=1:ppn=20
-#PBS -j oe
-#PBS -l walltime=24000:00:00
-#PBS -q high
-echo "This job is "$PBS_JOBID@$PBS_QUEUE
-cd $PBS_O_WORKDIR
-pwd
-nproc=$(cat $PBS_NODEFILE | wc -l)
-echo $nproc
-
-function runvasp(){
-mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
-}
-
-function check(){
-if [ ! -f "OUTCAR" ] ;then
-echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
-exit
-fi
-tail "OUTCAR" > "OUTINFO"
-outcheck=$(grep "Voluntary context switches:" OUTINFO) 
-rm OUTINFO
-if [ -z "$outcheck" ]
-then
-echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
-echo $PBS_JOBID >> $RVASP_path/errorinfo
-exit
-fi
-}
-
-
-function s5.relax(){
-cp 1 5.relax -r
-cd 5.relax
-runvasp
-check
-cd ..
-}
-
-function s5.static.opt(){
-bash ${RVASP_path}/calc_step/static_opt
-cd 5.static
-runvasp
-check
-cd ..
-}
-
-function s5.static(){
-bash ${RVASP_path}/calc_step/static
-cd 5.static
-runvasp
-check
-cd ..
-}
-
-function s7(){
-bash ${RVASP_path}/calc_step/chg
-cd 7.chg
-runvasp
-check
-cp INCAR INCAR_ELF
-mv INCAR_step INCAR
-bash ${RVASP_path}/bader_charge/get_bader_charge.sh
-cd ..
-}
-
-
-function s8(){
-bash ${RVASP_path}/calc_step/band
-cd 8.band
-runvasp
-check
-python ${RVASP_path}/calc_step/bandscript.py
-cd ..
-}
-
-
-function s9(){
-bash ${RVASP_path}/calc_step/dos
-cd 9.dos
-runvasp
-check
-python ${RVASP_path}/calc_step/dosscript.py
-cd ..
-}
-
-function s10(){
-bash ${RVASP_path}/calc_step/optics
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function s10_metal(){
-bash ${RVASP_path}/calc_step/optics_metal
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function main(){
-if [ $(($1 % 2)) == 0 ]; then
-s5.relax
-fi
-if [ $(($1 % 3)) == 0 ]; then
-if [ $(($2 % 2)) == 0 ]; then
-s5.static.opt
-else
-s5.static
-fi
-fi
-if [ $(($1 % 5)) == 0 ]; then
-if [ $(($2 % 3)) == 0 ]; then
-s7
-else
-s7
-fi
-fi
-if [ $(($1 % 7)) == 0 ]; then
-s8
-fi
-if [ $(($1 % 11)) == 0 ]; then
-if [ $(($2 % 5)) == 0 ]; then
-s9
-else
-s9
-fi
-fi
-if [ $(($1 % 13)) == 0 ]; then
-if [ $(($2 % 7)) == 0 ]; then
-s10_metal
-else
-s10
-if [ -e 10.optics/optdata.csv ]; then
-    rm -r 10.optics
-    s10_metal
-fi
-fi
-fi
-}
-
-function loop(){
-for i in $(ls -d */)
-do
-if [[ $i == no* ]] ; then
-continue
-fi
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-function choose(){
-for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
-do
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-
-####LLLL###Don`t delete this line###
-choose 6 2 D110a D110b                                      
-##choose $temp1 $temp2
-##loop $temp1 $temp2
-##main $temp1 $temp2
-#!/bin/sh
-APP_NAME=intelY_mid
-NP=24
-NP_PER_NODE=12
-RUN="RAW"
-CURDIR=$PWD
-
-VASP=/home-yw/Soft/Vasp5.4/vasp_std
-source  /home-yw/env/intel-12.1.sh
-source  /home-yw/env/openmpi-1.6.5-intel.sh
-
-cd $CURDIR
-
-#start creating .nodelist
-rm -rf $CURDIR/nodelist >& /dev/null
-for i in `echo $LSB_HOSTS`
-do
-    echo "$i" >> $CURDIR/nodelist
-done
-nodelist=$(cat $CURDIR/nodelist | uniq | awk '{print $1}' | tr '\n' ',')
-
-function runvasp(){
+# 计算评估指标
+mse_best = mean_squared_error(y_test, y_pred_best)
+mae_best = mean_absolute_error(y_test, y_pred_best)
+r2_best = r2_score(y_test, y_pred_best)
 #
-echo -n "start time  " > time
-date >> time
 
-# for GK & YW users
-touch WAVECAR PCDAT IBZKPT XDATCAR OSZICAR CONTCAR CHG PROCAR OUTCAR EIGENVAL DOSCAR CHGCAR
-sleep 10
 
-mpirun -np $NP -machinefile $CURDIR/nodelist $VASP  &> vasp.out
-echo -n "end   time  " >> time ; date >> time
-cat time >> vasp.out
+# 获取特征重要性（系数）
+feature_importance = best_xgb_model.feature_importances_
+#%%
+
+# 将特征和其对应的重要性合并为DataFrame
+feature_importance_df = pd.DataFrame({'Feature': X.columns, 'Importance': feature_importance})
+
+# 根据重要性降序排序
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# 打印特征排序和重要性
+print("特征排序和重要性：")
+print(feature_importance_df)
+
+# 可视化特征排序图
+plt.figure(figsize=(10, 6))
+fig, ax = plt.subplots()
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+ax.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+title_fontsize = 16
+label_fontsize = 16
+sns.barplot(x='Importance', y='Feature', data=feature_importance_df)
+plt.title("XGB",fontsize=title_fontsize)
+plt.xlabel("Importance",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+plt.savefig('picture/band_XGB.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+#%%
+# 输出最佳参数和最佳得分
+print("最佳参数：", random_search.best_params_)
+print("最佳得分：", random_search.best_score_)
+# 打印最佳模型的回归指标
+print("最佳模型回归指标：")
+print("Mean Squared Error:", mse_best)
+print("Mean Absolute Error:", mae_best)
+print("R-squared:", r2_best)
+
+# 可视化最佳模型的预测结果与真实结果的对比散点图
+plt.figure(figsize=(8, 8))
+plt.scatter(y_test, y_pred_best, color='blue', alpha=0.5)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], linestyle='--', color='red', linewidth=2)
+plt.title("True vs Predicted Results (Best XGBoost Regression Model)")
+plt.xlabel("True Results")
+plt.ylabel("Predicted Results")
+plt.show()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 16:26:37 2024
+
+@author: zhangchengyu
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 15:40:02 2024
+opt,吸收率_随机森林模型
+@author: zhangchengyu
+"""
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#加载数据
+file_path = "D:\data\STO_RNO大论文数据\superlattice_chongsuan\\2023.6.5结果汇总\Re_STO_Ni\机器学习\optic_machlearn.xlsx"  # 更改为您的文件路径
+df = pd.read_excel(file_path)
+
+
+# 删除 'Re' 列
+df1 = df.drop(['Re', 'Ni radius', 'O radius'], axis=1)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
+
+#%%对整个数据集超参搜索
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+import optuna
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+
+# 将特征变量和目标变量分开
+X = df.drop(['absorptivity','reflectance'], axis=1)
+y = df['absorptivity']
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+
+# 定义目标函数，用于评估超参数组合
+# 定义目标函数
+def objective(trial):
+    n_estimators = trial.suggest_int('n_estimators', 50, 200)
+    max_depth = trial.suggest_int('max_depth', 3, 11)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf',2, 20)
+
+    # 使用随机森林回归模型
+    rf_model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        random_state=42
+    )
+
+    # 训练模型
+    rf_model.fit(X_train, y_train)
+
+    # 预测
+    y_pred = rf_model.predict(X_test)
+
+    # 计算评估指标
+    mse = mean_squared_error(y_test, y_pred)
+    return mse
+
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=50)
+
+# 输出最佳参数和最佳得分
+best_params = study.best_params
+print("\n最佳参数：", best_params)
+
+# 使用最佳参数训练最终模型
+best_rf_model = RandomForestRegressor(
+    n_estimators=best_params['n_estimators'],
+    max_depth=best_params['max_depth'],
+    min_samples_split=best_params['min_samples_split'],
+    min_samples_leaf=best_params['min_samples_leaf'],
+    random_state=42
+)
+best_rf_model.fit(X_train, y_train)
+
+#%%
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 使用最佳模型预测
+y_pred_best = best_rf_model.predict(X_test)
+
+# 计算最佳模型的评估指标
+mse_best = mean_squared_error(y_test, y_pred_best)
+mae_best = mean_absolute_error(y_test, y_pred_best)
+r2_best = r2_score(y_test, y_pred_best)
+
+# 打印最佳模型的回归指标
+print("\n最佳模型回归指标：")
+print("Mean Squared Error:", mse_best)
+print("Mean Absolute Error:", mae_best)
+print("R-squared:", r2_best)
+#%%
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred_best, alpha=0.5)
+#设置字号和线条
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=16)
 #
-}
+title_fontsize = 18
+label_fontsize = 16
+
+plt.xlabel('A(ω) calculated',fontsize=label_fontsize)
+plt.ylabel('A(ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.savefig('picture/opt_ab.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Dec  9 11:09:25 2023
+
+@author: zhangchengyu
+"""
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#加载数据
+file_path = "D:\data\STO_RNO大论文数据\superlattice_chongsuan\\2023.6.5结果汇总\Re_STO_Ni\机器学习\optic_machlearn.xlsx"  # 更改为您的文件路径
+df = pd.read_excel(file_path)
 
 
-function check(){
-if [ ! -f "OUTCAR" ] ;then
-echo "$(pwd) error_no_OUTCAR" > $RVASP_path/errorinfo
-exit
-fi
-tail "OUTCAR" > "OUTINFO"
-outcheck=$(grep "Voluntary context switches:" OUTINFO) 
-rm OUTINFO
-if [ -z "$outcheck" ]
-then
-echo "$(pwd) OUTCAR is error" >> $RVASP_path/errorinfo
-echo $PBS_JOBID >> $RVASP_path/errorinfo
-exit
-fi
-}
+# 删除 'Re' 列
+df1 = df.drop(['Re', 'Ni radius', 'O radius'], axis=1)
 
 
-function s5_relax(){
-cp 1 5.relax -r
-cd 5.relax
-runvasp
-check
-cd ..
-}
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
 
-function s5_static_opt(){
-bash ${RVASP_path}/calc_step/static_opt
-cd 5.static
-runvasp
-check
-cd ..
-}
+# 计算相关性矩阵
+correlation_matrix = df1.corr()
 
-function s5_static(){
-bash ${RVASP_path}/calc_step/static
-cd 5.static
-runvasp
-check
-cd ..
-}
+# 创建热力图
+plt.figure(figsize=(12, 10))
+correlation_matrix = correlation_matrix[::-1]
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+plt.rc ('font', **font)
+sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm')
 
-function s7(){
-bash ${RVASP_path}/calc_step/chg
-cd 7.chg
-runvasp
-check
-cp INCAR INCAR_ELF
-mv INCAR_step INCAR
-bash ${RVASP_path}/bader_charge/get_bader_charge.sh
-cd ..
-}
+# 设置标题和标签
+title_fontsize = 18
+label_fontsize = 16
+plt.title('Correlation Heatmap',fontsize=title_fontsize)
+plt.xlabel("Feature",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
 
-
-function s8(){
-bash ${RVASP_path}/calc_step/band
-cd 8.band
-runvasp
-check
-python ${RVASP_path}/calc_step/bandscript.py
-cd ..
-}
-
-
-function s9(){
-bash ${RVASP_path}/calc_step/dos
-cd 9.dos
-runvasp
-check
-python ${RVASP_path}/calc_step/dosscript.py
-cd ..
-}
-
-function s10(){
-bash ${RVASP_path}/calc_step/optics
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function s10_metal(){
-bash ${RVASP_path}/calc_step/optics_metal
-cd 10.optics
-runvasp
-check
-python ${RVASP_path}/calc_step/optscript.py
-cd ..
-}
-
-function main(){
-if [ $(($1 % 2)) == 0 ]; then
-s5_relax
-fi
-if [ $(($1 % 3)) == 0 ]; then
-if [ $(($2 % 2)) == 0 ]; then
-s5_static_opt
-else
-s5_static
-fi
-fi
-if [ $(($1 % 5)) == 0 ]; then
-if [ $(($2 % 3)) == 0 ]; then
-s7
-else
-s7
-fi
-fi
-if [ $(($1 % 7)) == 0 ]; then
-s8
-fi
-if [ $(($1 % 11)) == 0 ]; then
-if [ $(($2 % 5)) == 0 ]; then
-s9
-else
-s9
-fi
-fi
-if [ $(($1 % 13)) == 0 ]; then
-if [ $(($2 % 7)) == 0 ]; then
-s10_metal
-else
-s10
-if [ -e 10.optics/optdata.csv ]; then
-    rm -r 10.optics
-    s10_metal
-fi
-fi
-fi
-}
-
-function loop(){
-for i in $(ls -d */)
-do
-if [[ $i == no* ]] ; then
-continue
-fi
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-function choose(){
-for i in $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24} ${25} ${26} ${27} ${28} ${29} ${30} ${31} ${32} ${33} ${34} ${35} ${36} ${37} ${38} ${39} ${40} ${41} ${42} ${43}
-do
-if [ $(($1 % 7)) == 0 ]; then
-cp KPOINTS_band $i/KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-cp KPOINTS_dos $i/KPOINTS_dos
-fi
-cd $i
-main $1 $2
-if [ $(($1 % 7)) == 0 ]; then
-rm KPOINTS_band
-fi
-if [ $(($1 % 11)) == 0 ]; then
-rm KPOINTS_dos
-fi
-cd ..
-done
-}
-
-
-####LLLL###Don`t delete this line###
-loop 715 2
-##choose $temp1 $temp2
-##loop $temp1 $temp2
-##main $temp1 $temp2
-
-exit
-#!/bin/sh
-cp $RVASP_path/bader_charge/chgsum.pl $RVASP_path/bader_charge/bader .
-./chgsum.pl  AECCAR0  AECCAR1 AECCAR2
-./bader CHGCAR -ref CHGCAR_sum
-rm chgsum.pl bader AVF.dat  BCF.dat CHGCAR_sum
-#!/bin/bash
-## Need to set the path where boltztrap is installed ,and the T of intrans##
-boltztrap_path=$HOME/soft/boltztrap-1.2.5
-## Settings ##
-
-T1="300."
-T2="300."
-if [ $# -eq 2 ]; then
-T1=$1
-T2=$2
-fi
-python $RVASP_path/boltztrap/EIGENVAL_up_down.py
-function btp(){
-    $boltztrap_path/src/x_trans BoltzTraP
-    rm :log
-}
-function up_down(){
-mkdir boltztrap_up
-mkdir boltztrap_down
-mv EIGENVAL EIGENVAL_def
-mv EIGENVAL_up EIGENVAL
-vaspkit -task 731
-mv case.intrans boltztrap_up/boltztrap_up.intrans
-mv case.energy boltztrap_up/boltztrap_up.energy
-mv case.struct boltztrap_up/boltztrap_up.struct
-mv EIGENVAL EIGENVAL_up
-mv EIGENVAL_down EIGENVAL
-vaspkit -task 731
-mv case.intrans boltztrap_down/boltztrap_down.intrans
-mv case.energy boltztrap_down/boltztrap_down.energy
-mv case.struct boltztrap_down/boltztrap_down.struct
-mv EIGENVAL EIGENVAL_down
-mv EIGENVAL_def EIGENVAL
-rm EIGENVAL_up
-rm EIGENVAL_down
-cd boltztrap_up
-sed -i "8c $T1 $T2" boltztrap_up.intrans
-btp
-cd ..
-mv boltztrap_up/boltztrap_up.trace boltztrap_up.trace
-rm boltztrap_up -r
-cd boltztrap_down
-sed -i "8c $T1 $T2" boltztrap_down.intrans
-btp
-cd ..
-mv boltztrap_down/boltztrap_down.trace boltztrap_down.trace
-rm boltztrap_down -r
-}
-
-
-function check_up(){
-    if [ ! -f "EIGENVAL_up" ] ; then
-        vaspkit -task 731
-        mkdir boltztrap_up
-        mv case.intrans boltztrap_up/boltztrap_up.intrans
-        mv case.energy boltztrap_up/boltztrap_up.energy
-        mv case.struct boltztrap_up/boltztrap_up.struct
-        cd boltztrap_up
-        sed -i "8c $T1 $T2" boltztrap_up.intrans
-        btp
-        cd ..
-        mv boltztrap_up/boltztrap_up.trace boltztrap_up.trace
-        rm boltztrap_up -r
-    else
-        up_down
-    fi
-}
-
-check_up
-rm FERMI_ENERGY
-
-#!/bin/bash
-
-##需要两个文件，一个BoltzTraP安装包，一个Makefile，放在~/soft/文件夹下
-cd ~/soft/
-tar -jxvf ~/soft/BoltzTraP*
-cp Makefile ~/soft/boltztrap-1.2.5/src/Makefile_ifort
-cd ~/soft/boltztrap-1.2.5/src/
-make -f Makefile_ifort
-
-echo "#######################"
-echo "########  Done ########"
-echo "#######################"
-
-
-
-
-## Divide the EIGENVAL into spin up and spin down to fit boltztrap.
-with open('EIGENVAL', 'r') as fcheck:
-    linescheck = fcheck.readlines()
-    if len(linescheck[8].split())==5:
-        with open('EIGENVAL', 'r') as f:
-            lines = f.readlines()
-            linesup = list(lines)  ## spin up for BoltzTraP
-            linesdown = list(lines)  ## spin down for BoltzTraP
-            k = int(lines[5].split()[1])   ## this is k number
-            bars = int(lines[5].split()[2])  ## this is count of k 
-            for i in range(k):
-                for j in range(bars):
-                    temp = lines[8+(bars+2)*i+j].split()
-                    linesup[8+(bars+2)*i+j] = "  " + temp[0] + "  " + temp[1] + "  " + temp[3] + '\n'
-                    linesdown[8+(bars+2)*i+j] = "  " + temp[0] + "  " + temp[2] + "  " + temp[4] + '\n'
-        with open('EIGENVAL_up', 'w') as f:
-            f.writelines(linesup)
-        with open('EIGENVAL_down', 'w') as f:
-            f.writelines(linesdown)
-
-
-#!/bin/bash
-#for INCAR setting
-f78=$(<7.chg/INCAR)
-function to_band_INCAR(){
-f78="${f78[@]/ICHARG = 2/ICHARG = 11}"
-f78="${f78[@]/ISMEAR = -5/ISMEAR = 0}"
-f78="${f78[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
-f78="${f78[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
-}
-to_band_INCAR
-function to_band(){
-mkdir 8.band
-cp 7.chg/POSCAR 8.band/POSCAR
-cp 7.chg/POTCAR 8.band/POTCAR
-cp 7.chg/CHGCAR 8.band/CHGCAR
-KP="$(pwd)/KPOINTS_band"
-cp $KP 8.band/KPOINTS
-echo "$f78" > 8.band/INCAR
-}
-to_band
-
-import os
-'''
-Applies to python2 and may apply to python3
-When the vasp band is calculated, running this script can generate the band data file 'band.csv'. 
-For systems with spin, band.csv (spin-up) and banddown.csv (spin-down) will be generated.
-By: Junsong Ren
-'''
-
-fermi = 0
-isspin = 0
-
-
-fermi_file=os.popen("grep E-fermi OUTCAR | tail -n 1")
-fermi=float(fermi_file.readlines()[0].split()[2])
-with open('EIGENVAL', 'r') as f:
-    lines = f.readlines()
-    if len(lines[8].split())==5:
-        isspin = 1
-    k = int(lines[5].split()[1])
-    bars = int(lines[5].split()[2])
-    data = [[0 for col in range(bars)] for row in range(k)]
-    for i in range(k):
-        for j in range(bars):
-            data[i][j] = float(lines[8+(bars+2)*i+j].split()[1])-fermi
-    datadown = [[0 for col in range(bars)] for row in range(k)]
-    for i in range(k):
-        for j in range(bars):
-            datadown[i][j] = float(lines[8+(bars+2)*i+j].split()[2])-fermi
-
-with open('band.csv', 'w') as f:
-    for i in range(k):
-        f.write(str(i+1))
-        for j in range(bars):
-            f.write(','+str(data[i][j]))
-        f.write('\n')
-
-if isspin:
-    with open('banddown.csv', 'w') as f:
-        for i in range(k):
-            f.write(str(i+1))
-            for j in range(bars):
-                f.write(','+str(datadown[i][j]))
-            f.write('\n')
+plt.savefig('opt_RF.tiff', dpi=400,bbox_inches='tight')
+plt.show()
 
 
 
 
 
-#!/bin/bash
-#for INCAR setting
-f57=$(<5.static/INCAR)
-function to_chg_INCAR(){
-f57="${f57[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
-f57="${f57[@]/LCHARG = .FALSE./LCHARG = .TRUE.}"
-}
-to_chg_INCAR
-function to_chg(){
-mkdir 7.chg
-cp 5.static/POTCAR 7.chg/POTCAR
-cp 5.static/CONTCAR 7.chg/POSCAR
-cp 5.static/KPOINTS 7.chg/KPOINTS
-echo "$f57" > 7.chg/INCAR_step
-echo "$f57" > 7.chg/INCAR
-echo '## bader_charge and ELF set##' >> 7.chg/INCAR
-echo 'LAECHG = .TRUE.' >> 7.chg/INCAR
-echo 'LELF = .TRUE.' >> 7.chg/INCAR
-}
-to_chg
+#%%对整个数据集超参搜索
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+import optuna
+import matplotlib.pyplot as plt
 
-#!/bin/bash
-#for INCAR setting
-f79=$(<7.chg/INCAR)
-function to_dos_INCAR(){
-f79="${f79[@]/ICHARG = 2/ICHARG = 11}"
-f79="${f79[@]/ISMEAR = 1/ISMEAR = -5}"
-f79="${f79[@]/ISMEAR = 0/ISMEAR = -5}"
-f79="${f79[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
-f79="${f79[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
-}
-to_dos_INCAR
-function to_dos(){
-mkdir 9.dos
-cp 7.chg/POTCAR 9.dos/POTCAR
-cp 7.chg/POSCAR 9.dos/POSCAR
-cp 7.chg/CHGCAR 9.dos/CHGCAR
-KP="$(pwd)/KPOINTS_dos"
-cp $KP 9.dos/KPOINTS
-echo "$f79" > 9.dos/INCAR
-echo -e '' >> 9.dos/INCAR
-echo '#= DOS Addition Settings =#' >> 9.dos/INCAR
-echo 'NEDOS = 1000' >> 9.dos/INCAR
-echo 'EMIN = -12' >> 9.dos/INCAR
-echo 'EMAX = 18' >> 9.dos/INCAR
-}
-to_dos
 
-## script to calculate the PDOS for VASP, spin-up and spin-down are in the same column.
-## Modify the parameters if necessary ##
-NEDOS = 1000;		##NEDOS flag in file INCAR
-## ##
-nums = [];
-fermi = 0;
-LORBITNUM = 1;	
-with open('POSCAR', 'r') as numfile:
-	linesnum = numfile.readlines()
-	nums = linesnum[6].split()  ## number of atoms for each element in file POSCAR,save as type list
-	
-with open('DOSCAR', 'r') as fe:
-	lines = fe.readlines()
-	fermi = float(lines[5].split()[3])		##fermi value
-	LORBITNUM = int(lines[0].split()[2])	##NUM = 1(LORBIT = 11),NUM = 0(LORBIT =Default)
-	NEDOS = int(lines[5].split()[2])
-	
-	if len(lines[6].split()) == 5:		##ISPIN = 2 OR 1	
-		dataEnergy = [0 for col in range(NEDOS)];  ##data for Energy
-		dataTotalUp = [0 for col in range(NEDOS)];	##data for TotalUp
-		dataTotalDown = [0 for col in range(NEDOS)]; ##data for TotalDown
-		for i in range(NEDOS):
-			dataEnergy[i] = float(lines[i+6].split()[0])-fermi;
-			dataTotalUp[i] = float(lines[i+6].split()[1]);
-			dataTotalDown[i] =-float(lines[i+6].split()[2]);
-		if LORBITNUM == 1:
-			prej = len(nums);
-			prek = NEDOS;
-			dataPTotalUp = [[0 for col in range(prej)] for row in range(prek)]	 ##data for Total UP of each element
-			dataPTotalDown = [[0 for col in range(prej)] for row in range(prek)]	##data for Total DOWN of each element
-			datasUp = [[0 for col in range(prej)] for row in range(prek)]	##data for s UP of each element
-			datasDown = [[0 for col in range(prej)] for row in range(prek)]
-			datapUp = [[0 for col in range(prej)] for row in range(prek)]
-			datapDown = [[0 for col in range(prej)] for row in range(prek)]
-			datadxyzUp = [[0 for col in range(prej)] for row in range(prek)]
-			datadxyzDown = [[0 for col in range(prej)] for row in range(prek)]
-			datad2Up = [[0 for col in range(prej)] for row in range(prek)]
-			datad2Down = [[0 for col in range(prej)] for row in range(prek)]
-			calclines = NEDOS + 7
-			for j in range(len(nums)):		#if have 3 elements ,j = 0 ,1 ,2
-				for k in range(NEDOS):
-					for i in range(int(nums[j])):
-						rl = calclines + k + (NEDOS+1)*i
-						datasUp[k][j] += float(lines[rl].split()[1]);
-						datasDown[k][j] += -float(lines[rl].split()[2]);
-						datapUp[k][j] += (float(lines[rl].split()[3]) + float(lines[rl].split()[5]) + float(lines[rl].split()[7]));
-						datapDown[k][j] += (-float(lines[rl].split()[4]) - float(lines[rl].split()[6]) - float(lines[rl].split()[8]));
-						datadxyzUp[k][j] += (float(lines[rl].split()[9]) + float(lines[rl].split()[11]) + float(lines[rl].split()[13]));
-						datadxyzDown[k][j] += (-float(lines[rl].split()[10]) - float(lines[rl].split()[12]) - float(lines[rl].split()[14]));
-						datad2Up[k][j] += (float(lines[rl].split()[15]) + float(lines[rl].split()[17]));
-						datad2Down[k][j] += (-float(lines[rl].split()[16]) - float(lines[rl].split()[18]));
-					dataPTotalUp[k][j] = datasUp[k][j] + datapUp[k][j] + datadxyzUp[k][j] + datad2Up[k][j];
-					dataPTotalDown[k][j] = datasDown[k][j] + datapDown[k][j] + datadxyzDown[k][j] + datad2Down[k][j];
-				calclines += int(nums[j])*(NEDOS+1);
-			with open('pdos.csv', 'w') as f:
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotalUp[i]))
-					for j in range(len(nums)):
-						f.write(','+str(dataPTotalUp[i][j]))
-						f.write(','+str(datasUp[i][j]))
-						f.write(','+str(datapUp[i][j]))
-						f.write(','+str(datadxyzUp[i][j]))
-						f.write(','+str(datad2Up[i][j]))
-					f.write('\n')
-				f.write('\n')	
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotalDown[i]))
-					for j in range(len(nums)):
-						f.write(','+str(dataPTotalDown[i][j]))
-						f.write(','+str(datasDown[i][j]))
-						f.write(','+str(datapDown[i][j]))
-						f.write(','+str(datadxyzDown[i][j]))
-						f.write(','+str(datad2Down[i][j]))
-					f.write('\n')
-					
-		else:
-			with open('dos.csv', 'w') as f:
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotalUp[i]))
-					f.write('\n')
-				f.write('\n')	
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotalDown[i]))
-					f.write('\n')
-	else:
-		dataEnergy = [0 for col in range(NEDOS)];  ##data for Energy
-		dataTotal = [0 for col in range(NEDOS)];	##data for Total
-		for i in range(NEDOS):
-			dataEnergy[i] = float(lines[i+6].split()[0])-fermi;
-			dataTotal[i] = float(lines[i+6].split()[1]);
-		if LORBITNUM == 1:
-			prej = len(nums);
-			prek = NEDOS;
-			dataPTotal = [[0 for col in range(prej)] for row in range(prek)]	 ##data for Total of each element
-			datas = [[0 for col in range(prej)] for row in range(prek)]	##data for s UP of each element
-			datap = [[0 for col in range(prej)] for row in range(prek)]
-			datadxyz = [[0 for col in range(prej)] for row in range(prek)]
-			datad2 = [[0 for col in range(prej)] for row in range(prek)]
-			calclines = NEDOS + 7
-			for j in range(len(nums)):		#if have 3 elements ,j = 0 ,1 ,2
-				for k in range(NEDOS):
-					for i in range(int(nums[j])):
-						rl = calclines + k + (NEDOS+1)*i
-						datas[k][j] += float(lines[rl].split()[1]);
-						datap[k][j] += (float(lines[rl].split()[2]) + float(lines[rl].split()[3]) + float(lines[rl].split()[4]));
-						datadxyz[k][j] += (float(lines[rl].split()[5]) + float(lines[rl].split()[6]) + float(lines[rl].split()[7]));
-						datad2[k][j] += (-float(lines[rl].split()[8]) - float(lines[rl].split()[9]));
-					dataPTotal[k][j] = datas[k][j] + datap[k][j] + datadxyz[k][j] + datad2[k][j];
-				calclines += int(nums[j])*(NEDOS+1);
-			with open('pdos.csv', 'w') as f:
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotal[i]))
-					for j in range(len(nums)):
-						f.write(','+str(dataPTotal[i][j]))					
-					#'''
-						f.write(','+str(datas[i][j]))
-						f.write(','+str(datap[i][j]))
-						f.write(','+str(datadxyz[i][j]))
-						f.write(','+str(datad2[i][j]))
-					#'''
-					f.write('\n')	
-		else:
-			with open('dos.csv', 'w') as f:
-				for i in range(NEDOS):
-					f.write(str(dataEnergy[i]))
-					f.write(','+str(dataTotal[i]))
-					f.write('\n')
+# 将特征变量和目标变量分开
+X = df.drop(['absorptivity','reflectance'], axis=1)
+y = df['absorptivity']
 
-					
-#!/bin/bash
-f510=$(<5.static/INCAR)
-function to_opt_INCAR(){
-f510="${f510[@]/ISTART = 0/ISTART = 1}"
-f510="${f510[@]/ICHARG = 11/ICHARG = 2}"
-f510="${f510[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
-f510="${f510[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
-f510="${f510[@]/ISMEAR = 1/ISMEAR = -5}"
-f510="${f510[@]/ISMEAR = 0/ISMEAR = -5}"
-}
-to_opt_INCAR
-function to_opt(){
-mkdir 10.optics
-cp 5.static/POTCAR 10.optics/POTCAR
-cp 5.static/CONTCAR 10.optics/POSCAR
-cp 5.static/KPOINTS 10.optics/KPOINTS
-cp 5.static/WAVECAR 10.optics/WAVECAR
-echo "$f510" > 10.optics/INCAR
-echo -e '' >> 10.optics/INCAR
-echo '#= Optics Settings =#' >> 10.optics/INCAR
-echo 'LOPTICS = .TRUE.' >> 10.optics/INCAR
-echo 'NBANDS = 800' >> 10.optics/INCAR
-echo 'NEDOS = 2000' >> 10.optics/INCAR
-echo 'LRPA = .TRUE.' >> 10.optics/INCAR
-echo 'NPAR = 1' >> 10.optics/INCAR
-}
-to_opt
+# 定义目标函数，用于评估超参数组合
+def objective(trial):
+    params = {
+        'n_estimators': trial.suggest_int('n_estimators', 100, 300),
+        'max_depth': trial.suggest_categorical('max_depth', [None, 5, 10]),
+        'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
+        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 4)
+    }
 
-#!/bin/bash
-f510=$(<5.static/INCAR)
-function to_opt_INCAR(){
-f510="${f510[@]/ISTART = 0/ISTART = 1}"
-f510="${f510[@]/ICHARG = 11/ICHARG = 2}"
-f510="${f510[@]/LWAVE = .TRUE./LWAVE = .FALSE.}"
-f510="${f510[@]/LCHARG = .TRUE./LCHARG = .FALSE.}"
-f510="${f510[@]/ISMEAR = -5/ISMEAR = 0}"
-f510="${f510[@]/ISMEAR = 1/ISMEAR = 0}"
-}
-to_opt_INCAR
-function to_opt(){
-mkdir 10.optics
-cp 5.static/POTCAR 10.optics/POTCAR
-cp 5.static/CONTCAR 10.optics/POSCAR
-cp 5.static/KPOINTS 10.optics/KPOINTS
-cp 5.static/WAVECAR 10.optics/WAVECAR
-echo "$f510" > 10.optics/INCAR
-echo -e '' >> 10.optics/INCAR
-echo '#= Optics Settings =#' >> 10.optics/INCAR
-echo 'LOPTICS = .TRUE.' >> 10.optics/INCAR
-echo 'NBANDS = 800' >> 10.optics/INCAR
-echo 'NEDOS = 20000' >> 10.optics/INCAR
-echo 'LRPA = .TRUE.' >> 10.optics/INCAR
-echo 'NPAR = 1' >> 10.optics/INCAR
-}
-to_opt
+    rf = RandomForestRegressor(**params)
+    
+    # 定义交叉验证策略
+    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+    
+    # 计算交叉验证的均方误差作为目标值
+    score = -np.mean(cross_val_score(rf, X, y, cv=cv, scoring='neg_mean_squared_error'))
+    
+    return score
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
 
-with open('OUTCAR', 'r') as f:
-	## Modify the parameters if necessary ##
-	NEDOS = 2000;	##NEDOS flag in file INCAR
-	direction = 3;   ## optical direction, 1 for (100), 2 for (010), 3 for (001)
-	## ##
-	lines = f.readlines();
-	imgmin = 3 + lines.index('  frequency dependent IMAGINARY DIELECTRIC FUNCTION (independent particle, no local field effects) density-density\n');
-	realmin = 3 + lines.index('  frequency dependent      REAL DIELECTRIC FUNCTION (independent particle, no local field effects) density-density\n');
-	dataEn = [0 for col in range(NEDOS)]   ## data for Energy
-	imgdataOpt = [0 for col in range(NEDOS)] ## data for img	
-	realdataOpt = [0 for col in range(NEDOS)] ## data for real
-	refdataOpt = [0 for col in range(NEDOS)] ## data for Reflectivity
-	absdataOpt = [0 for col in range(NEDOS)] ## data for Absorption rate
-	for i in range(NEDOS):
-		dataEn[i] = float(lines[imgmin + i].split()[0]);
-		imgdataOpt[i] = float(lines[imgmin + i].split()[direction]);
-		realdataOpt[i] = float(lines[realmin + i].split()[direction]);
-		absdataOpt[i] = 2**0.5 * dataEn[i] * ((realdataOpt[i]**2 + imgdataOpt[i]**2)**0.5 - realdataOpt[i])**0.5;
-		reftemp = complex(realdataOpt[i],imgdataOpt[i]);   ##create a temp complex number
-		refdataOpt[i] = abs((reftemp**0.5-1)/(reftemp**0.5+1))**2;
-	with open('optdata.csv', 'w') as f:
-		for i in range(NEDOS):
-			f.write(str(dataEn[i]))
-			f.write(','+str(imgdataOpt[i]))
-			f.write(','+str(realdataOpt[i]))
-			f.write(','+str(refdataOpt[i]))
-			f.write(','+str(absdataOpt[i]))
-			f.write('\n')
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=100)
 
-#!/bin/bash
-#for INCAR setting
-f=$(<5.relax/INCAR)
-function to_static_INCAR(){
-f="${f[@]/IBRION/#IBRION}"
-f="${f[@]/NSW/#NSW}"
-f="${f[@]/ISIF/#ISIF}"
-}
-to_static_INCAR
-function to_static(){
-mkdir 5.static
-cp 5.relax/POTCAR 5.static/POTCAR
-cp 5.relax/CONTCAR 5.static/POSCAR
-cp 5.relax/KPOINTS 5.static/KPOINTS
-echo "$f" > 5.static/INCAR
-}
-to_static
+# 输出最佳参数和最佳得分
+print("最佳参数：", study.best_params)
+print("最佳得分：", study.best_value)
 
-#!/bin/bash
-#for INCAR setting
-f=$(<5.relax/INCAR)
-function to_static_INCAR(){
-f="${f[@]/IBRION/#IBRION}"
-f="${f[@]/NSW/#NSW}"
-f="${f[@]/ISIF/#ISIF}"
-f="${f[@]/LWAVE = .FALSE./LWAVE = .TRUE.}"
-}
-to_static_INCAR
-function to_static(){
-mkdir 5.static
-cp 5.relax/POTCAR 5.static/POTCAR
-cp 5.relax/CONTCAR 5.static/POSCAR
-cp 5.relax/KPOINTS 5.static/KPOINTS
-echo "$f" > 5.static/INCAR
-}
-to_static
+# 获取最佳超参数
+best_params = study.best_params
+#%%
+#对光吸收吸数进行随机森林模型学习
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import numpy as np
 
-#!/bin/sh
-## Function: The value greater or less than a certain z-axis is selected to relax.By Ren JS
-## Usage, ./thisfile.sh or ./thisfile.sh > 0.01
-## Setting ##
-value='>0.24'    ##  `>0.01` is means if the z of atom >0.01, the atom will be selected to relax(add T T T),nor add F F F
-file_name=POSCAR-0
-dos2unix $file_name
-out_file_name=POSCAR
-## Done ##
-head -n 7 $file_name > $out_file_name
-echo -e "Selective\nDirect" >> $out_file_name
-## the number of last line at POSCAR
-for i in {9..168}
-do
-low=`sed -n ${i}p $file_name`
-z=`sed -n ${i}p $file_name | awk '{print $3}'`
-check_value=`echo "${z}${value}" | bc` 
-if [ $check_value -eq 1 ]; then
-echo $low T T T >> $out_file_name
-else
-echo $low F F F >> $out_file_name
-fi
-done
-node4:slots=20
+# 加载数据
+df = pd.read_excel(file_path)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
 
-#!/bin/bash
-#SBATCH -J GaN
-#SBATCH -N 1
-#SBATCH -n 32
-#SBATCH -p szsc_c
-NP=32
-module purge
-module load compiler/intel/2017.5.239
-module load mpi/hpcx/2.4.1/intel-2017.5.239
-echo -n "start time " > time
-date >> time
-srun --mpi=pmix_v3 /public/software/apps/vasp/5.4.4/hpcx-2.4.1-intel2017/vasp_std &> output
-echo -n "end time " >> time ; date >> time
-cat time >> output
-#!/bin/bash
-mpirun -np 20 -hostfile host  vasp_std
-#!/bin/sh
-APP_NAME=intelY_mid
-NP=60
-NP_PER_NODE=12
-RUN="RAW"
-CURDIR=$PWD
+# 假设您的目标变量是 'BandGap'
+X = df.drop(['absorptivity','reflectance'], axis=1)
+y = df['absorptivity']
 
-VASP=/home-yw/Soft/Vasp5.4/vasp_std
-source  /home-yw/env/intel-12.1.sh
-source  /home-yw/env/openmpi-1.6.5-intel.sh
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-cd $CURDIR
+# 使用最佳参数创建随机森林模型
+model = RandomForestRegressor(**best_params)
 
-#start creating .nodelist
-rm -rf $CURDIR/nodelist >& /dev/null
-for i in `echo $LSB_HOSTS`
-do
-    echo "$i" >> $CURDIR/nodelist
-done
-nodelist=$(cat $CURDIR/nodelist | uniq | awk '{print $1}' | tr '\n' ',')
+# 训练模型
+model.fit(X_train, y_train)
 
+# 预测测试集
+y_pred = model.predict(X_test)
+
+# 计算均方误差
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+
+print(f"MSE: {mse}, RMSE: {rmse}")
+#%%
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+#设置字号和线条
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
 #
-echo -n "start time  " > time
-date >> time
+plt.rc ('font', **font)
+plt.xlabel('ɛ (ω) calculated',fontsize=label_fontsize)
+plt.ylabel('ɛ (ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.show()
 
-# for GK & YW users
-touch WAVECAR PCDAT IBZKPT XDATCAR OSZICAR CONTCAR CHG PROCAR OUTCAR EIGENVAL DOSCAR CHGCAR
-sleep 10
 
-mpirun -np $NP -machinefile $CURDIR/nodelist $VASP  &> vasp.out
-echo -n "end   time  " >> time ; date >> time
-cat time >> vasp.out
+#%%
+import pandas as pd
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#加载数据
+df = pd.read_excel(file_path)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
+#分离目标量
+X = df.drop(['absorptivity','reflectance',], axis=1)
+y = df['reflectance']
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 创建决策树模型
+model = DecisionTreeRegressor()
+
+# 训练模型
+model.fit(X_train, y_train)
+
+# 预测测试集
+y_pred = model.predict(X_test)
+
+# 计算均方误差
+mse_best = mean_squared_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+
+print(f"MSE: {mse}, RMSE: {rmse}")
+
+# 可视化预测结果和实际数据
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+#设置字号和线条
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
 #
-exit
-#PBS -N test
-#PBS -l nodes=1:ppn=20
-#PBS -j oe
-#PBS -l walltime=2400:00:00
-#PBS -q high
+plt.rc ('font', **font)
+plt.xlabel('R(ω) calculated',fontsize=label_fontsize)
+plt.ylabel('R(ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.show()
+#%%
+from sklearn.tree import DecisionTreeRegressor, plot_tree
 
-echo "This job is "$PBS_JOBID@$PBS_QUEUE
-cd $PBS_O_WORKDIR
-pwd
-nproc=$(cat $PBS_NODEFILE | wc -l)
-echo $nproc
-mpirun -np $nproc -machinefile $PBS_NODEFILE vasp_std
-##RunCASTEP.sh BaSnO3
+# 为了示例，我们将使用较小的树（深度限制）以便于可视化
+# 实际应用中可能需要更深的树来获得更好的性能
+model = DecisionTreeRegressor(max_depth=3)
+model.fit(X_train, y_train)
+
+# 使用 matplotlib 绘制决策树
+plt.figure(figsize=(20,10))
+plot_tree(model, feature_names=X.columns, filled=True, rounded=True)
+plt.show()
+
+#%%
+from sklearn.linear_model import LinearRegression
+
+# 重新创建和训练线性回归模型
+model_linear = LinearRegression()
+model_linear.fit(X_train, y_train)
+
+# 获取模型的系数和截距
+coefficients = model_linear.coef_
+intercept = model_linear.intercept_
+
+# 创建线性方程的字符串表示
+linear_equation = "y = {:.2f}".format(intercept) + " + ".join([" + {:.2f}*{}".format(coef, feature) for coef, feature in zip(coefficients, X.columns)])
+
+linear_equation
+
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 15:40:02 2024
+opt,反射率计算_随机森林模型
+@author: zhangchengyu
+"""
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#加载数据
+file_path = "D:\data\STO_RNO大论文数据\superlattice_chongsuan\\2023.6.5结果汇总\Re_STO_Ni\机器学习\optic_machlearn.xlsx"  # 更改为您的文件路径
+df = pd.read_excel(file_path)
+
+
+# 删除 'Re' 列
+df1 = df.drop(['Re', 'Ni radius', 'O radius'], axis=1)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
+
+#%%对整个数据集超参搜索
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+import optuna
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+
+# 将特征变量和目标变量分开
+X = df.drop(['reflectance'], axis=1)
+y = df['reflectance']
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+# 定义目标函数，用于评估超参数组合
+# 定义目标函数
+def objective(trial):
+    n_estimators = trial.suggest_int('n_estimators', 50, 200)
+    max_depth = trial.suggest_int('max_depth', 3,5)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 5)
+
+    # 使用随机森林回归模型
+    rf_model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        random_state=42
+    )
+
+    # 训练模型
+    rf_model.fit(X_train, y_train)
+
+    # 预测
+    y_pred = rf_model.predict(X_test)
+
+    # 计算评估指标
+    mse = mean_squared_error(y_test, y_pred)
+    return mse
+
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=50)
+
+# 输出最佳参数和最佳得分
+best_params = study.best_params
+print("\n最佳参数：", best_params)
+
+# 使用最佳参数训练最终模型
+best_rf_model = RandomForestRegressor(
+    n_estimators=best_params['n_estimators'],
+    max_depth=best_params['max_depth'],
+    min_samples_split=best_params['min_samples_split'],
+    min_samples_leaf=best_params['min_samples_leaf'],
+    random_state=42
+)
+best_rf_model.fit(X_train, y_train)
+
+#%%
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 使用最佳模型预测
+y_pred_best = best_rf_model.predict(X_test)
+
+# 计算最佳模型的评估指标
+mse_best = mean_squared_error(y_test, y_pred_best)
+mae_best = mean_absolute_error(y_test, y_pred_best)
+r2_best = r2_score(y_test, y_pred_best)
+
+# 打印最佳模型的回归指标
+print("\n最佳模型回归指标：")
+print("Mean Squared Error:", mse_best)
+print("Mean Absolute Error:", mae_best)
+print("R-squared:", r2_best)
+#%%
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred_best, alpha=0.5)
+#设置字号和线条
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.rc ('font', **font)
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=16)
+#
+title_fontsize = 18
+label_fontsize = 16
+
+plt.xlabel('R(ω) calculated',fontsize=label_fontsize)
+plt.ylabel('R(ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.savefig('picture/opt_RF.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 18:57:23 2024
+#对光反射系数进行随机森林模型学习
+@author: zhangchengyu
+"""
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+import optuna
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error,r2_score
+
+
+#加载数据
+file_path = "D:\data\STO_RNO大论文数据\superlattice_chongsuan\\2023.6.5结果汇总\Re_STO_Ni\机器学习\optic_machlearn.xlsx"  # 更改为您的文件路径
+df = pd.read_excel(file_path)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
+#分离目标量
+X = df.drop(['absorptivity','reflectance',], axis=1)
+y = df['reflectance']
+
+
+
+#%%超参搜索
+# 定义目标函数，用于评估超参数组合
+def objective(trial):
+    params = {
+        'n_estimators': trial.suggest_int('n_estimators', 100, 300),
+        'max_depth': trial.suggest_categorical('max_depth', [None, 5, 10]),
+        'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
+        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 4)
+    }
+
+    rf = RandomForestRegressor(**params)
+    
+    # 定义交叉验证策略
+    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+    
+    # 计算交叉验证的均方误差作为目标值
+    score = -np.mean(cross_val_score(rf, X, y, cv=cv, scoring='neg_mean_squared_error'))
+    
+    return score
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=50)
+
+# 输出最佳参数和最佳得分
+print("最佳参数：", study.best_params)
+print("最佳得分：", study.best_value)
+
+# 获取最佳超参数
+best_params = study.best_params
+
+#%%
+
+# 使用最佳参数创建随机森林模型
+model = RandomForestRegressor(**best_params)
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 训练模型
+model.fit(X_train, y_train)
+
+# 预测测试集
+y_pred = model.predict(X_test)
+
+# 计算均方误差
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2_best = r2_score(y_test, y_pred)
+
+print(f"MSE: {mse}, RMSE: {rmse},R2:{r2_best}")
+
+#%%
+# 可视化预测结果和实际数据
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+#设置字号和线条
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+#
+plt.rc ('font', **font)
+title_fontsize = 18
+label_fontsize = 16
+plt.xlabel('R(ω) calculated',fontsize=label_fontsize)
+plt.ylabel('R(ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.show()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jan 17 18:55:46 2024
+#光吸收系数，随机森林学习
+@author: zhangchengyu
+"""
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#加载数据
+file_path = "D:\data\STO_RNO大论文数据\superlattice_chongsuan\\2023.6.5结果汇总\Re_STO_Ni\机器学习\optic_machlearn.xlsx"  # 更改为您的文件路径
+df = pd.read_excel(file_path)
+# 删除 'Re' 列
+df1 = df.drop(['Re', 'Ni radius', 'O radius'], axis=1)
+df = df.drop(['Re','Ni radius', 'O radius'], axis=1)
+#%%
+# 计算相关性矩阵
+correlation_matrix = df1.corr()
+
+# 创建热力图
+plt.figure(figsize=(12, 10))
+correlation_matrix = correlation_matrix[::-1]
+font = {'family': 'serif', 'serif': ['Times New Roman']}
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+plt.rc ('font', **font)
+sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm')
+
+# 设置标题和标签
+title_fontsize = 18
+label_fontsize = 16
+plt.title('Correlation Heatmap',fontsize=title_fontsize)
+plt.xlabel("Feature",fontsize=label_fontsize)
+plt.ylabel("Feature",fontsize=label_fontsize)
+
+plt.savefig('opt_RF.tiff', dpi=400,bbox_inches='tight')
+plt.show()
+
+#%%对整个数据集超参搜索
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+import optuna
+import matplotlib.pyplot as plt
+
+
+# 将特征变量和目标变量分开
+X = df.drop(['absorptivity','reflectance'], axis=1)
+y = df['absorptivity']
+
+# 定义目标函数，用于评估超参数组合
+def objective(trial):
+    params = {
+        'n_estimators': trial.suggest_int('n_estimators', 100, 300),
+        'max_depth': trial.suggest_categorical('max_depth', [None, 5, 10]),
+        'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
+        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 4)
+    }
+
+    rf = RandomForestRegressor(**params)
+    
+    # 定义交叉验证策略
+    cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+    
+    # 计算交叉验证的均方误差作为目标值
+    score = -np.mean(cross_val_score(rf, X, y, cv=cv, scoring='neg_mean_squared_error'))
+    
+    return score
+# 创建Optuna优化对象
+study = optuna.create_study(direction='minimize')
+
+# 执行贝叶斯优化
+study.optimize(objective, n_trials=50)
+
+# 输出最佳参数和最佳得分
+print("最佳参数：", study.best_params)
+print("最佳得分：", study.best_value)
+
+# 获取最佳超参数
+best_params = study.best_params
+
+
+#%%
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error,r2_score
+
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 使用最佳参数创建随机森林模型
+model = RandomForestRegressor(**best_params)
+
+# 训练模型
+model.fit(X_train, y_train)
+
+# 预测测试集
+y_pred = model.predict(X_test)
+
+# 计算均方误差
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+r2_best = r2_score(y_test, y_pred)
+
+print(f"MSE: {mse}, RMSE: {rmse},R2:{r2_best}")
+
+#%%
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 使用 matplotlib 创建散点图
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+#设置字号和线条
+plt.tick_params(axis='both', which='both', width=3)
+plt.tick_params(axis='both', which='major', labelsize=14)
+#
+plt.rc ('font', **font)
+plt.xlabel('ɛ (ω) calculated',fontsize=label_fontsize)
+plt.ylabel('ɛ (ω) Predicted ',fontsize=label_fontsize)
+#plt.title('Actual vs Predicted Values',fontsize=title_fontsize)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2) # 添加一条完美预测的参考线
+plt.show()
 
 
